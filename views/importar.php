@@ -17,6 +17,7 @@ include '../src/config/db.php';
                 <li><a href="importar.php">Importar</a></li>
                 <li><a href="checadas.php">Checadas</a></li>
                 <li><a href="calculo.php">Calculo</a></li>
+                <li><a href="empleados.php">Personal</a></li>
             </ul>
         </div>
         <div class="content">

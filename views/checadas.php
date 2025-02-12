@@ -20,6 +20,7 @@ $filtroFecha = isset($_GET['fecha']) ? $_GET['fecha'] : '';
                 <li><a href="importar.php">Importar</a></li>
                 <li><a href="checadas.php">Checadas</a></li>
                 <li><a href="calculo.php">Calculo</a></li>
+                <li><a href="empleados.php">Personal</a></li>
             </ul>
         </div>
         <div class="content">
@@ -35,7 +36,6 @@ $filtroFecha = isset($_GET['fecha']) ? $_GET['fecha'] : '';
             <table border="1">
                 <thead>
                     <tr>
-                        <th>ID Checada</th>
                         <th>Fecha</th>
                         <th>ID Empleado</th>
                         <th>Nombre</th>
@@ -68,7 +68,6 @@ $filtroFecha = isset($_GET['fecha']) ? $_GET['fecha'] : '';
                     if (count($checadas) > 0) {
                         foreach ($checadas as $row) {
                             echo "<tr>";
-                            echo "<td>" . $row['idChecadaEmpleado'] . "</td>";
                             echo "<td>" . $row['fecha'] . "</td>";
                             echo "<td>" . $row['idEmpleado'] . "</td>";
                             echo "<td>" . $row['nombre'] . "</td>";

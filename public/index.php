@@ -19,6 +19,7 @@ include '../src/config/db.php';
                 <li><a href="../views/importar.php">Importar</a></li>
                 <li><a href="../views/checadas.php">Checadas</a></li>
                 <li><a href="../views/calculo.php">Calculo</a></li>
+                <li><a href="../views/empleados.php">Personal</a></li>
             </ul>
         </div>
         <div class="content">
