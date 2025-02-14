@@ -1,8 +1,5 @@
 <?php
 include '../src/config/db.php';
-
-// Obtener el valor del filtro si existe
-$busqueda = isset($_GET['busqueda']) ? $_GET['busqueda'] : '';
 ?>
 
 <!DOCTYPE html>
@@ -11,6 +8,52 @@ $busqueda = isset($_GET['busqueda']) ? $_GET['busqueda'] : '';
     <meta charset="UTF-8">
     <title>Personal</title>
     <link rel="stylesheet" href="../public/styles.css">
+    <!-- Bootstrap CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome CSS -->
+    <link href="css/all.min.css" rel="stylesheet">
+    <style>
+        /* Estilos para la paginación */
+        .paginacion {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .paginacion a {
+            margin: 0 5px;
+            text-decoration: none;
+            color: #4CAF50;
+        }
+        .paginacion a:hover {
+            text-decoration: underline;
+        }
+        .paginacion .activo {
+            font-weight: bold;
+            color: #000;
+        }
+    </style>
+    <script>
+        // Función para búsqueda dinámica con AJAX
+        function buscarEmpleados() {
+            const busqueda = document.getElementById('busqueda').value;
+            const pagina = document.getElementById('pagina').value;
+
+            fetch(`buscar_empleados.php?busqueda=${busqueda}&pagina=${pagina}`)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('resultados').innerHTML = data;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Función para cambiar de página
+        function cambiarPagina(pagina) {
+            document.getElementById('pagina').value = pagina;
+            buscarEmpleados();
+        }
+
+        // Cargar resultados al inicio
+        window.onload = buscarEmpleados;
+    </script>
 </head>
 <body>
     <div class="container">
@@ -28,60 +71,17 @@ $busqueda = isset($_GET['busqueda']) ? $_GET['busqueda'] : '';
             <p>Podrás verificar todo el personal del departamento.</p>
 
             <!-- Formulario de Búsqueda -->
-            <form method="GET" action="empleados.php">
-                <input type="text" name="busqueda" placeholder="Buscar por nombre o número" value="<?php echo $busqueda; ?>">
+            <form method="GET" action="empleados.php" onsubmit="event.preventDefault(); buscarEmpleados();">
+                <input type="text" id="busqueda" name="busqueda" placeholder="Buscar por nombre o número">
+                <input type="hidden" id="pagina" name="pagina" value="1">
                 <button type="submit">Buscar</button>
             </form>
 
-            <table border="1">
-                <thead>
-                    <tr>
-                        <th>Número Empleado</th>
-                        <th>Nombre</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    // Construcción de la consulta con límite y filtro de búsqueda
-                    $sql = "SELECT numero, nombre FROM nominasueldo";
-                    
-                    // Agregar filtro si hay búsqueda
-                    if (!empty($busqueda)) {
-                        $sql .= " WHERE numero LIKE :busqueda OR nombre LIKE :busqueda";
-                    }
-                    
-                    // Limitar a 100 registros
-                    $sql .= " ORDER BY numero ASC LIMIT 10";
-                    
-                    $stmt = $conn->prepare($sql);
-
-                    // Asignar parámetros si hay búsqueda
-                    if (!empty($busqueda)) {
-                        $busquedaParam = "%" . $busqueda . "%";
-                        $stmt->bindParam(':busqueda', $busquedaParam, PDO::PARAM_STR);
-                    }
-
-                    $stmt->execute();
-                    $empleados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                    // Mostrar los registros
-                    if (count($empleados) > 0) {
-                        foreach ($empleados as $row) {
-                            echo "<tr>";
-                            echo "<td>" . $row['numero'] . "</td>";
-                            echo "<td>" . $row['nombre'] . "</td>";
-                            echo "</tr>";
-                        }
-                    } else {
-                        echo "<tr><td colspan='2'>No se encontró personal.</td></tr>";
-                    }
-
-                    // Cerrar conexión
-                    $conn = null;
-                    ?>
-                </tbody>
-            </table>
+            <!-- Contenedor para los resultados -->
+            <div id="resultados"></div>
         </div>
     </div>
+    <!-- Bootstrap JS -->
+    <script src="js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

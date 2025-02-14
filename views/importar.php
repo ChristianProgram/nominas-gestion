@@ -1,10 +1,11 @@
 <?php
-include '../src/config/db.php';
-require '../vendor/autoload.php'; // PhpSpreadsheet
+// Mostrar errores de PHP
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-use PhpOffice\PhpSpreadsheet\IOFactory;
+include '../src/config/db.php'; // Incluir la configuración de la base de datos
 
-$vistaPrevia = "";
+$mensaje = ""; // Mensaje para mostrar el resultado de la importación
 
 // Verificar si se ha enviado un archivo
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["archivo"])) {
@@ -12,39 +13,71 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["archivo"])) {
     $nombreArchivo = $_FILES["archivo"]["name"];
     $extension = strtolower(pathinfo($nombreArchivo, PATHINFO_EXTENSION));
 
-    $datos = [];
-
-    // Procesar CSV
+    // Procesar solo archivos CSV
     if ($extension == "csv") {
-        if (($handle = fopen($archivo, "r")) !== FALSE) {
-            while (($fila = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                $datos[] = $fila;
-            }
-            fclose($handle);
-        }
-    }
-    // Procesar Excel (XLS o XLSX)
-    elseif (in_array($extension, ["xls", "xlsx"])) {
-        $spreadsheet = IOFactory::load($archivo);
-        $sheet = $spreadsheet->getActiveSheet();
-        $datos = $sheet->toArray();
-    } else {
-        $vistaPrevia = "<p style='color:red;'>Formato de archivo no soportado.</p>";
-    }
+        if (is_uploaded_file($archivo) && ($handle = fopen($archivo, "r")) !== FALSE) {
+            try {
+                // Iniciar transacción
+                $pdo->beginTransaction();
 
-    // Generar la vista previa
-    if (!empty($datos)) {
-        $vistaPrevia .= "<table border='1' cellpadding='5' cellspacing='0'>";
-        foreach ($datos as $index => $fila) {
-            $vistaPrevia .= "<tr>";
-            foreach ($fila as $columna) {
-                $vistaPrevia .= $index === 0 
-                    ? "<th style='background-color:#f2f2f2;'>" . htmlspecialchars($columna) . "</th>" 
-                    : "<td>" . htmlspecialchars($columna) . "</td>";
+                // Ignorar la primera fila (encabezados)
+                fgetcsv($handle, 1000, ",");
+
+                // Preparar la consulta para nominasueldo
+                $queryNomina = "INSERT INTO nominasueldo (
+                    numero, nombre, ordinario, septimo_dia, horas_extras, vacaciones, 
+                    prima_vac, prim_dom, bono_prod, dia_fest, bono_asist, incapacidad, nomina_total
+                ) VALUES (
+                    :numero, :nombre, :ordinario, :septimo_dia, :horas_extras, :vacaciones, 
+                    :prima_vac, :prim_dom, :bono_prod, :dia_fest, :bono_asist, :incapacidad, :nomina_total
+                )";
+                $stmt = $pdo->prepare($queryNomina);
+
+                // Preparar la consulta para empleados
+                $queryEmpleados = "INSERT INTO empleados (Numero_Empleado, Nombre) VALUES (:numero_empleado, :nombre_empleado)";
+                $stmtEmpleados = $pdo->prepare($queryEmpleados);
+
+                // Insertar cada fila en las tablas correspondientes
+                while (($fila = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                    // Insertar en nominasueldo
+                    $stmt->execute([
+                        ':numero'       => $fila[0] ?? null,
+                        ':nombre'       => $fila[1] ?? null,
+                        ':ordinario'    => $fila[2] ?? null,
+                        ':septimo_dia'  => $fila[3] ?? null,
+                        ':horas_extras' => $fila[4] ?? null,
+                        ':vacaciones'   => $fila[5] ?? null,
+                        ':prima_vac'    => $fila[6] ?? null,
+                        ':prim_dom'     => $fila[7] ?? null,
+                        ':bono_prod'    => $fila[8] ?? null,
+                        ':dia_fest'     => $fila[9] ?? null,
+                        ':bono_asist'   => $fila[10] ?? null,
+                        ':incapacidad'  => $fila[11] ?? null,
+                        ':nomina_total' => $fila[12] ?? null,
+                    ]);
+
+                    // Insertar en empleados
+                    $stmtEmpleados->execute([
+                        ':numero_empleado' => $fila[0] ?? null,
+                        ':nombre_empleado' => $fila[1] ?? null,
+                    ]);
+                }
+
+                // Confirmar transacción
+                $pdo->commit();
+                $mensaje = "<p style='color:green;'>Datos importados correctamente.</p>";
+            } catch (PDOException $e) {
+                // Revertir cambios en caso de error
+                $pdo->rollBack();
+                $mensaje = "<p style='color:red;'>Error al importar los datos: " . $e->getMessage() . "</p>";
+            } finally {
+                fclose($handle);
             }
-            $vistaPrevia .= "</tr>";
+        } else {
+            $mensaje = "<p style='color:red;'>No se pudo abrir el archivo CSV.</p>";
         }
-        $vistaPrevia .= "</table>";
+    } else {
+        $mensaje = "<p style='color:red;'>Solo se permiten archivos CSV.</p>";
     }
 }
 ?>
@@ -55,6 +88,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["archivo"])) {
     <meta charset="UTF-8">
     <title>Importar Datos</title>
     <link rel="stylesheet" href="../public/styles.css">
+    <!-- Bootstrap CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome CSS -->
+    <link href="css/all.min.css" rel="stylesheet">
+    <style>
+        /* Estilo para el botón de importar */
+        .boton-importar {
+            margin-top: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .boton-importar:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -69,30 +125,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["archivo"])) {
         </div>
         <div class="content">
             <h1>Importar Datos</h1>
-            <p>Sube un archivo CSV o Excel y revisa los datos antes de importarlos.</p>
+            <p>Sube un archivo CSV para importar los datos a la base de datos.</p>
 
             <!-- Formulario para cargar el archivo -->
             <form action="importar.php" method="post" enctype="multipart/form-data">
-                <label for="archivo">Selecciona un archivo CSV o Excel:</label>
-                <input type="file" name="archivo" id="archivo" accept=".csv, .xls, .xlsx" required>
+                <label for="archivo">Selecciona un archivo CSV:</label>
+                <input type="file" name="archivo" id="archivo" accept=".csv" required>
                 <br><br>
-                <button type="submit">Mostrar Vista Previa</button>
+                <button type="submit" class="boton-importar">Importar Datos</button>
             </form>
 
-            <hr>
-
-            <!-- Vista Previa de los datos -->
-            <h2>Vista Previa del Archivo</h2>
-            <div>
-                <?php
-                if (!empty($vistaPrevia)) {
-                    echo $vistaPrevia;
-                } else {
-                    echo "<p>No se ha cargado ningún archivo o el archivo está vacío.</p>";
-                }
-                ?>
-            </div>
+            <!-- Mensaje de resultado de la importación -->
+            <?php if (!empty($mensaje)): ?>
+                <div><?php echo $mensaje; ?></div>
+            <?php endif; ?>
         </div>
     </div>
+    <!-- Bootstrap JS -->
+    <script src="js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

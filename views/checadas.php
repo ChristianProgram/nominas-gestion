@@ -11,6 +11,10 @@ $filtroFecha = isset($_GET['fecha']) ? $_GET['fecha'] : '';
     <meta charset="UTF-8">
     <title>Checadas</title>
     <link rel="stylesheet" href="../public/styles.css">
+    <!-- Bootstrap CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome CSS -->
+    <link href="css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -55,7 +59,7 @@ $filtroFecha = isset($_GET['fecha']) ? $_GET['fecha'] : '';
                     }
 
                     $sql .= " ORDER BY c.fecha DESC";
-                    $stmt = $conn->prepare($sql);
+                    $stmt = $pdo->prepare($sql);
 
                     // Bind del parámetro si hay filtro
                     if (!empty($filtroFecha)) {
@@ -79,11 +83,13 @@ $filtroFecha = isset($_GET['fecha']) ? $_GET['fecha'] : '';
                     }
 
                     // Cerrar conexión
-                    $conn = null;
+                    $pdo = null;
                     ?>
                 </tbody>
             </table>
         </div>
     </div>
+    <!-- Bootstrap JS -->
+    <script src="js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

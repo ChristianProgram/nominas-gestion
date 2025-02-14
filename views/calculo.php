@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <title>Cálculo</title>
     <link rel="stylesheet" href="../public/styles.css">
+    <!-- Bootstrap CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome CSS -->
+    <link href="css/all.min.css" rel="stylesheet">
     <style>
         /* Estilo para la tabla */
         table {
@@ -52,6 +56,11 @@
             font-style: italic;
             color: #999;
         }
+        /* Mensaje de error */
+        .error {
+            color: red;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -72,6 +81,7 @@
             <!-- Botón para llamar al procedimiento -->
             <button class="boton-calcular" onclick="calcularNomina()">Calcular Percepciones</button>
             <p class="cargando" id="cargando">Calculando... Por favor, espera.</p>
+            <p id="error-message" class="error" style="display: none;">Hubo un error al procesar la solicitud. Por favor, intenta nuevamente.</p>
 
             <!-- Contenedor para la tabla de resultados -->
             <div id="resultados"></div>
@@ -82,11 +92,18 @@
         function calcularNomina() {
             // Mostrar mensaje de carga
             document.getElementById("cargando").style.display = "block";
+            document.getElementById("error-message").style.display = "none"; // Ocultar mensaje de error
 
-            // Realizamos la solicitud al servidor
             fetch('../src/config/procesar_calculo.php')
-                .then(response => response.text())
+                .then(response => {
+                    // Verificar si la respuesta es correcta
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+                    return response.text();
+                })
                 .then(data => {
+                    // Mostrar los resultados en el contenedor
                     document.getElementById("resultados").innerHTML = data;
                     document.getElementById("cargando").style.display = "none";
 
@@ -95,14 +112,18 @@
                     if (tabla) {
                         setTimeout(() => {
                             tabla.classList.add('visible');
-                        }, 100); 
+                        }, 100);
                     }
                 })
                 .catch(error => {
+                    // Mostrar mensaje de error si la solicitud falla
                     console.error("Error al procesar el cálculo:", error);
                     document.getElementById("cargando").style.display = "none";
+                    document.getElementById("error-message").style.display = "block";
                 });
         }
     </script>
+    <!-- Bootstrap JS -->
+    <script src="js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
