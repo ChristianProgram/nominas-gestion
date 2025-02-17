@@ -3,7 +3,7 @@
 $host = 'localhost';
 $dbname = 'checador';
 $username = 'root';
-$password = '';
+$password = 'admin1234';
 
 try {
     // Se usa $pdo como variable de conexión
