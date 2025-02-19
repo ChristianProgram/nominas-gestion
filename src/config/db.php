@@ -1,9 +1,9 @@
 <?php
 // Configuración de la base de datos
 $host = 'localhost';
-$dbname = 'checador';
+$dbname = 'checadora';
 $username = 'root';
-$password = '';
+$password = 'admin1234';
 
 try {
     // Se usa $pdo como variable de conexión

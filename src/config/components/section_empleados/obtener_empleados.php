@@ -1,15 +1,26 @@
 <?php
 include '../src/config/db.php';
 
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
+// Consulta para obtener todos los empleados
+$query = "SELECT * FROM empleados";
+$stmt = $pdo->prepare($query);
+$stmt->execute();
+$empleados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $sql = "SELECT * FROM empleados WHERE Numero_Empleado = :id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-    $stmt->execute();
-    $empleado = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    echo json_encode($empleado);
+// Mostrar empleados
+if (count($empleados) > 0) {
+    foreach ($empleados as $empleado) {
+        echo "
+            <div class='empleado'>
+                <p><strong>{$empleado['Nombre']}</strong> ({$empleado['Numero_Empleado']})</p>
+                <p>Departamento: {$empleado['Departamento']}</p>
+                <a href='editar_empleado.php?id={$empleado['ID']}'>
+                    <button>Editar</button>
+                </a>
+            </div>
+        ";
+    }
+} else {
+    echo "<p>No se encontraron empleados.</p>";
 }
 ?>
