@@ -1,27 +1,53 @@
 <?php
-include '../src/config/db.php'; // Ajusta la ruta según la ubicación de tu archivo de conexión a la base de datos
+error_reporting(E_ALL); // Mostrar todos los errores
+ini_set('display_errors', 1); // Mostrar errores en pantalla
 
-$id = $_GET['id'];
+include '../src/config/db.php'; // Asegúrate de que la ruta sea correcta
 
-// Obtener datos del empleado
-$sqlEmpleado = "SELECT ID, Nombre, Numero_Empleado, Departamento FROM empleados WHERE ID = :id";
-$stmtEmpleado = $pdo->prepare($sqlEmpleado);
-$stmtEmpleado->bindParam(':id', $id);
-$stmtEmpleado->execute();
-$empleado = $stmtEmpleado->fetch(PDO::FETCH_ASSOC);
+try {
+    if (!isset($_GET['id'])) {
+        die("ID de empleado no proporcionado.");
+    }
 
-// Actualizar departamento
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $departamento = $_POST['departamento'];
+    $id = $_GET['id'];
 
-    $sqlUpdate = "UPDATE empleados SET Departamento = :departamento WHERE ID = :id";
-    $stmtUpdate = $pdo->prepare($sqlUpdate);
-    $stmtUpdate->bindParam(':departamento', $departamento);
-    $stmtUpdate->bindParam(':id', $id);
-    $stmtUpdate->execute();
+    // Obtener datos del empleado
+    $sqlEmpleado = "SELECT ID, Nombre, Numero_Empleado, Departamento FROM empleados WHERE ID = :id";
+    $stmtEmpleado = $pdo->prepare($sqlEmpleado);
+    $stmtEmpleado->bindParam(':id', $id);
+    $stmtEmpleado->execute();
+    $empleado = $stmtEmpleado->fetch(PDO::FETCH_ASSOC);
 
-    header("Location: empleados.php"); // Ajusta la ruta según la ubicación de tu archivo de lista de empleados
-    exit();
+    if (!$empleado) {
+        die("Empleado no encontrado.");
+    }
+
+    // Obtener la lista de cargos (roles)
+    $sqlRoles = "SELECT id, nombre_cargo FROM roles";
+    $stmtRoles = $pdo->query($sqlRoles);
+    $roles = $stmtRoles->fetchAll(PDO::FETCH_ASSOC);
+
+    // Actualizar cargo (rol)
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        if (!isset($_POST['departamento'])) {
+            die("Cargo no proporcionado.");
+        }
+
+        $cargo = (int)$_POST['departamento']; // Convertir a entero
+
+        $sqlUpdate = "UPDATE empleados SET Departamento = :cargo WHERE ID = :id";
+        $stmtUpdate = $pdo->prepare($sqlUpdate);
+        $stmtUpdate->bindParam(':cargo', $cargo, PDO::PARAM_INT); // Asegurar que sea un entero
+        $stmtUpdate->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmtUpdate->execute();
+
+        header("Location: empleados.php"); // Redirigir a la lista de empleados
+        exit();
+    }
+} catch (PDOException $e) {
+    die("Error en la base de datos: " . $e->getMessage());
+} catch (Exception $e) {
+    die("Error general: " . $e->getMessage());
 }
 ?>
 
@@ -49,22 +75,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <h1 class="section-title">Editar Empleado</h1>
                 </div>
 
-                <form method="POST" action="">
+                <form method="POST" action="editar_empleado.php?id=<?php echo $id; ?>">
                     <div class="form-group">
                         <label for="nombre">Nombre:</label>
-                        <input type="text" id="nombre" value="<?php echo $empleado['Nombre']; ?>" disabled>
+                        <input type="text" id="nombre" value="<?php echo htmlspecialchars($empleado['Nombre']); ?>" disabled>
                     </div>
                     <div class="form-group">
                         <label for="numero_empleado">Número de Empleado:</label>
-                        <input type="text" id="numero_empleado" value="<?php echo $empleado['Numero_Empleado']; ?>" disabled>
+                        <input type="text" id="numero_empleado" value="<?php echo htmlspecialchars($empleado['Numero_Empleado']); ?>" disabled>
                     </div>
                     <div class="form-group">
-                        <label for="departamento">Departamento:</label>
-                        <input type="text" id="departamento" name="departamento" value="<?php echo $empleado['Departamento']; ?>">
+                        <label for="departamento">Cargo:</label>
+                        <select id="departamento" name="departamento" required>
+                            <option value="">Seleccione un cargo</option>
+                            <?php foreach ($roles as $rol): ?>
+                                <option value="<?php echo $rol['id']; ?>" <?php echo ($rol['id'] == $empleado['Departamento']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($rol['nombre_cargo']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">Actualizar</button>
-                        <a href="../../empleados.php" class="btn btn-secondary">Cancelar</a>
+                        <a href="empleados.php" class="btn btn-secondary">Cancelar</a>
                     </div>
                 </form>
             </div>

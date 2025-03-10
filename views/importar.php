@@ -120,6 +120,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["archivo"])) {
                 <li><a href="checadas.php">Checadas</a></li>
                 <li><a href="empleados.php">Personal</a></li>
                 <li><a href="calculo.php">Calculo</a></li>
+                <li><a href="roles.php">Cargos</a></li>
                 <li><a href="importar.php">Importar</a></li>
             </ul>
         </div>

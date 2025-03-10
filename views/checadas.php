@@ -8,31 +8,57 @@ $fechaSeleccionada = isset($_GET['fecha']) ? $_GET['fecha'] : date('Y-m-d');
 $fechaInicio = '';
 $fechaFin = '';
 
-// Obtener el rango de fechas (si se selecciona un rango de fechas)
-if (isset($_GET['fecha_desde']) && isset($_GET['fecha_hasta'])) {
-    $fechaInicio = $_GET['fecha_desde'];
-    $fechaFin = $_GET['fecha_hasta'];
-} else {
-    // Si no se selecciona un rango, se usa la semana de la fecha seleccionada
-    $fechaInicioSemana = date('Y-m-d', strtotime('monday this week', strtotime($fechaSeleccionada)));
-    $fechaFinSemana = date('Y-m-d', strtotime('sunday this week', strtotime($fechaSeleccionada)));
-    $fechaInicio = $fechaInicioSemana;
-    $fechaFin = $fechaFinSemana;
+// Determinar si se selecciona un día o una semana
+$modoFiltro = isset($_GET['modo_filtro']) ? $_GET['modo_filtro'] : 'dia'; // Por defecto, filtrar por día
+
+if ($modoFiltro === 'dia') {
+    // Filtrar por un día específico
+    $fechaInicio = $fechaSeleccionada;
+    $fechaFin = $fechaSeleccionada;
+} elseif ($modoFiltro === 'semana') {
+    // Filtrar por una semana (lunes a domingo)
+    $fechaInicio = date('Y-m-d', strtotime('monday this week', strtotime($fechaSeleccionada)));
+    $fechaFin = date('Y-m-d', strtotime('sunday this week', strtotime($fechaSeleccionada)));
 }
 
-// Obtener lista de empleados
-$sqlEmpleados = "SELECT Numero_Empleado, Nombre FROM empleados ORDER BY Nombre ASC";
+// Definir el término de búsqueda
+$searchTerm = isset($_GET['search']) ? $_GET['search'] : '';
+
+// Paginación
+$empleadosPorPagina = 10; // Número de empleados por página
+$paginaActual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+$offset = ($paginaActual - 1) * $empleadosPorPagina;
+
+// Obtener lista de empleados paginada
+$sqlEmpleados = "SELECT Numero_Empleado, Nombre FROM empleados WHERE Nombre LIKE :search OR Numero_Empleado LIKE :search ORDER BY Nombre ASC LIMIT :limit OFFSET :offset";
 $stmtEmpleados = $pdo->prepare($sqlEmpleados);
+$stmtEmpleados->bindValue(':limit', $empleadosPorPagina, PDO::PARAM_INT);
+$stmtEmpleados->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmtEmpleados->bindValue(':search', "%$searchTerm%", PDO::PARAM_STR);
 $stmtEmpleados->execute();
 $empleados = $stmtEmpleados->fetchAll(PDO::FETCH_ASSOC);
 
-// Obtener checadas entre las fechas seleccionadas
-$sqlChecadas = "SELECT Numero_Empleado, fecha, asistio FROM checadas_nuevo WHERE fecha BETWEEN :fechaInicio AND :fechaFin";
-$stmtChecadas = $pdo->prepare($sqlChecadas);
-$stmtChecadas->bindParam(':fechaInicio', $fechaInicio);
-$stmtChecadas->bindParam(':fechaFin', $fechaFin);
-$stmtChecadas->execute();
-$checadas = $stmtChecadas->fetchAll(PDO::FETCH_ASSOC);
+// Obtener el total de empleados para la paginación (con búsqueda)
+$sqlTotalEmpleados = "SELECT COUNT(*) as total FROM empleados WHERE Nombre LIKE :search OR Numero_Empleado LIKE :search";
+$stmtTotalEmpleados = $pdo->prepare($sqlTotalEmpleados);
+$stmtTotalEmpleados->bindValue(':search', "%$searchTerm%", PDO::PARAM_STR);
+$stmtTotalEmpleados->execute();
+$totalEmpleados = $stmtTotalEmpleados->fetch(PDO::FETCH_ASSOC)['total'];
+$totalPaginas = ceil($totalEmpleados / $empleadosPorPagina);
+
+// Obtener faltas entre las fechas seleccionadas
+$sqlFaltas = "SELECT Numero_Empleado, fecha FROM faltas WHERE fecha BETWEEN :fechaInicio AND :fechaFin";
+$stmtFaltas = $pdo->prepare($sqlFaltas);
+$stmtFaltas->bindParam(':fechaInicio', $fechaInicio);
+$stmtFaltas->bindParam(':fechaFin', $fechaFin);
+$stmtFaltas->execute();
+$faltas = $stmtFaltas->fetchAll(PDO::FETCH_ASSOC);
+
+// Convertir las faltas a un formato más manejable
+$faltasPorEmpleado = [];
+foreach ($faltas as $falta) {
+    $faltasPorEmpleado[$falta['Numero_Empleado']][] = $falta['fecha'];
+}
 
 // Guardado automático (simulación al final del día)
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -41,32 +67,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
         $pdo->beginTransaction();
 
-        // Borrar registros previos de esa fecha
-        $sqlDelete = "DELETE FROM checadas_nuevo WHERE fecha = :fecha";
-        $stmtDelete = $pdo->prepare($sqlDelete);
-        $stmtDelete->bindParam(':fecha', $fechaSeleccionada);
-        $stmtDelete->execute();
+        // Obtener todos los empleados (sin paginación) para asegurar que se guarden todos
+        $sqlTodosEmpleados = "SELECT Numero_Empleado FROM empleados WHERE Nombre LIKE :search OR Numero_Empleado LIKE :search";
+        $stmtTodosEmpleados = $pdo->prepare($sqlTodosEmpleados);
+        $stmtTodosEmpleados->bindValue(':search', "%$searchTerm%", PDO::PARAM_STR);
+        $stmtTodosEmpleados->execute();
+        $todosEmpleados = $stmtTodosEmpleados->fetchAll(PDO::FETCH_ASSOC);
 
-        // Insertar nuevas asistencias
-        $sqlInsert = "INSERT INTO checadas_nuevo (Numero_Empleado, fecha, asistio) VALUES (:Numero_Empleado, :fecha, :asistio)";
+        // Insertar nuevas faltas
+        $sqlInsert = "INSERT INTO faltas (Numero_Empleado, fecha) VALUES (:Numero_Empleado, :fecha)
+                      ON DUPLICATE KEY UPDATE fecha = :fecha"; // Evitar duplicados
         $stmtInsert = $pdo->prepare($sqlInsert);
 
-        foreach ($empleados as $empleado) {
+        foreach ($todosEmpleados as $empleado) {
             $numeroEmpleado = $empleado['Numero_Empleado'];
-            $asistio = isset($_POST['asistencia'][$numeroEmpleado]) ? 1 : 0;
 
-            $stmtInsert->execute([
-                ':Numero_Empleado' => $numeroEmpleado,
-                ':fecha' => $fechaSeleccionada,
-                ':asistio' => $asistio
-            ]);
+            // Verificar si el empleado tiene falta marcada para cada día
+            foreach ($_POST['faltas'][$numeroEmpleado] as $dia => $falta) {
+                if ($falta == 1) {
+                    $stmtInsert->execute([
+                        ':Numero_Empleado' => $numeroEmpleado,
+                        ':fecha' => $dia
+                    ]);
+                }
+            }
         }
 
         $pdo->commit();
-        echo "<div class='alert success'>Asistencias guardadas correctamente.</div>";
+        echo "<script>
+                alert('Faltas guardadas correctamente.');
+                window.location.href = 'checadas.php?fecha=$fechaSeleccionada&modo_filtro=$modoFiltro&search=" . urlencode($searchTerm) . "';
+              </script>";
     } catch (PDOException $e) {
         $pdo->rollBack();
-        echo "<div class='alert error'>Error al guardar las asistencias: " . $e->getMessage() . "</div>";
+        echo "<script>alert('Error al guardar las faltas: " . $e->getMessage() . "');</script>";
     }
 }
 ?>
@@ -101,6 +135,60 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background-color: red;
             color: white;
         }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pagination a, .pagination span {
+            margin: 0 5px;
+            text-decoration: none;
+            color: #333;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+        .pagination a.active {
+            font-weight: bold;
+            color: #000;
+            background-color: #f2f2f2;
+        }
+        .pagination a:hover:not(.disabled) {
+            background-color: #ddd;
+        }
+        .pagination .disabled {
+            color: #aaa;
+            cursor: not-allowed;
+            background-color: #f9f9f9;
+        }
+        .pagination-button {
+            display: inline-block;
+            padding: 8px 12px;
+            margin: 0 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            transition: background-color 0.3s ease;
+        }
+        .pagination-button:hover:not(.disabled) {
+            background-color: #ddd;
+        }
+        .pagination-button.disabled {
+            color: #aaa;
+            cursor: not-allowed;
+            background-color: #f9f9f9;
+        }
+        .filter-form {
+            margin-bottom: 20px;
+        }
+        .filter-form label {
+            margin-right: 10px;
+        }
+        .filter-form select, .filter-form input {
+            padding: 5px;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -111,6 +199,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <li><a href="checadas.php">Checadas</a></li>
                 <li><a href="empleados.php">Personal</a></li>
                 <li><a href="calculo.php">Calculo</a></li>
+                <li><a href="roles.php">Cargos</a></li>
                 <li><a href="importar.php">Importar</a></li>
             </ul>
         </div>
@@ -120,84 +209,129 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <h1 class="section-title">Checadas</h1>
                 </div>
 
-                <!-- Filtro por Fecha o Rango -->
+                <!-- Filtro por Día o Semana -->
                 <form method="GET" action="checadas.php" class="filter-form">
-                    <label for="fechaDesde">Selecciona un rango de fechas:</label><br>
-                    <input type="text" id="fechaDesde" name="fecha_desde" value="<?php echo $fechaInicio; ?>" placeholder="Desde" onchange="this.form.submit()">
-                    <input type="text" id="fechaHasta" name="fecha_hasta" value="<?php echo $fechaFin; ?>" placeholder="Hasta" onchange="this.form.submit()">
+                    <label for="modo_filtro">Filtrar por:</label>
+                    <select id="modo_filtro" name="modo_filtro" onchange="this.form.submit()">
+                        <option value="dia" <?php echo ($modoFiltro === 'dia') ? 'selected' : ''; ?>>Día</option>
+                        <option value="semana" <?php echo ($modoFiltro === 'semana') ? 'selected' : ''; ?>>Semana</option>
+                    </select>
+
+                    <?php if ($modoFiltro === 'dia'): ?>
+                        <label for="fecha">Selecciona un día:</label>
+                        <input type="text" id="fecha" name="fecha" value="<?php echo $fechaSeleccionada; ?>" onchange="this.form.submit()">
+                    <?php elseif ($modoFiltro === 'semana'): ?>
+                        <label for="fecha">Selecciona una semana:</label>
+                        <input type="text" id="fecha" name="fecha" value="<?php echo $fechaSeleccionada; ?>" onchange="this.form.submit()">
+                    <?php endif; ?>
+
+                    <!-- Campo oculto para conservar el término de búsqueda -->
+                    <input type="hidden" name="search" value="<?php echo htmlspecialchars($searchTerm); ?>">
                 </form>
 
-                <!-- Tabla de Asistencias Semanal -->
-                <table class="asistencias-table">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
+                <!-- Formulario de búsqueda -->
+                <form method="GET" action="checadas.php">
+                    <input type="text" name="search" placeholder="Buscar por nombre o número" value="<?php echo htmlspecialchars($searchTerm); ?>">
+                    <!-- Campos ocultos para conservar la fecha y el modo de filtrado -->
+                    <input type="hidden" name="fecha" value="<?php echo $fechaSeleccionada; ?>">
+                    <input type="hidden" name="modo_filtro" value="<?php echo $modoFiltro; ?>">
+                    <button type="submit">Buscar</button>
+                </form>
+
+                <!-- Tabla de Asistencias -->
+                <form method="POST" action="checadas.php">
+                    <input type="hidden" name="fecha" value="<?php echo $fechaSeleccionada; ?>">
+                    <input type="hidden" name="modo_filtro" value="<?php echo $modoFiltro; ?>">
+                    <input type="hidden" name="search" value="<?php echo htmlspecialchars($searchTerm); ?>">
+                    <table class="asistencias-table">
+                        <thead>
+                            <tr>
+                                <th>Número de Empleado</th>
+                                <th>Nombre</th>
+                                <?php
+                                // Mostrar los días en el rango
+                                $dias = [];
+                                $inicio = new DateTime($fechaInicio);
+                                $fin = new DateTime($fechaFin);
+                                $interval = DateInterval::createFromDateString('1 day');
+                                $periodo = new DatePeriod($inicio, $interval, $fin->modify('+1 day'));
+
+                                // Días en español
+                                $diasSemana = [
+                                    'Monday' => 'Lunes', 
+                                    'Tuesday' => 'Martes', 
+                                    'Wednesday' => 'Miércoles', 
+                                    'Thursday' => 'Jueves', 
+                                    'Friday' => 'Viernes', 
+                                    'Saturday' => 'Sábado', 
+                                    'Sunday' => 'Domingo'
+                                ];
+
+                                foreach ($periodo as $dia) {
+                                    $diaNombre = $dia->format('l'); // Obtiene el nombre del día en inglés
+                                    $diaNombreEspañol = $diasSemana[$diaNombre]; // Traduce al español
+                                    echo "<th>" . $diaNombreEspañol . " (" . $dia->format('Y-m-d') . ")</th>";
+                                    $dias[] = $dia->format('Y-m-d');
+                                }
+                                ?>
+                            </tr>
+                        </thead>
+                        <tbody>
                             <?php
-                            // Mostrar los días en el rango
-                            $dias = [];
-                            $inicio = new DateTime($fechaInicio);
-                            $fin = new DateTime($fechaFin);
-                            $interval = DateInterval::createFromDateString('1 day');
-                            $periodo = new DatePeriod($inicio, $interval, $fin->modify('+1 day'));
+                            foreach ($empleados as $empleado) {
+                                $numeroEmpleado = $empleado['Numero_Empleado'];
+                                echo "<tr>";
+                                echo "<td>" . $empleado['Numero_Empleado'] . "</td>";
+                                echo "<td>" . $empleado['Nombre'] . "</td>";
 
-                            // Días en español
-                            $diasSemana = [
-                                'Monday' => 'Lunes', 
-                                'Tuesday' => 'Martes', 
-                                'Wednesday' => 'Miércoles', 
-                                'Thursday' => 'Jueves', 
-                                'Friday' => 'Viernes', 
-                                'Saturday' => 'Sábado', 
-                                'Sunday' => 'Domingo'
-                            ];
+                                // Mostrar la asistencia de cada día en el rango
+                                foreach ($dias as $dia) {
+                                    $tieneFalta = in_array($dia, $faltasPorEmpleado[$numeroEmpleado] ?? []);
+                                    $clase = $tieneFalta ? 'absent' : 'present';
+                                    echo "<td class='$clase'>";
+                                    echo "<input type='checkbox' name='faltas[$numeroEmpleado][$dia]' value='1' " . ($tieneFalta ? 'checked' : '') . "> Falta";
+                                    echo "</td>";
+                                }
 
-                            foreach ($periodo as $dia) {
-                                $diaNombre = $dia->format('l'); // Obtiene el nombre del día en inglés
-                                $diaNombreEspañol = $diasSemana[$diaNombre]; // Traduce al español
-                                echo "<th>" . $diaNombreEspañol . " (" . $dia->format('Y-m-d') . ")</th>";
-                                $dias[] = $dia->format('Y-m-d');
+                                echo "</tr>";
                             }
                             ?>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        foreach ($empleados as $empleado) {
-                            $numeroEmpleado = $empleado['Numero_Empleado'];
-                            echo "<tr>";
-                            echo "<td>" . $empleado['Nombre'] . "</td>";
+                        </tbody>
+                    </table>
+                    <button type="submit" style="margin-top: 20px;">Guardar Faltas</button>
+                </form>
 
-                            // Mostrar la asistencia de cada día en el rango
-                            foreach ($dias as $dia) {
-                                $asistio = 0;
-                                // Verificar si existe la checada para el empleado y la fecha
-                                foreach ($checadas as $checada) {
-                                    if ($checada['Numero_Empleado'] == $numeroEmpleado && $checada['fecha'] == $dia) {
-                                        $asistio = $checada['asistio'];
-                                        break;
-                                    }
-                                }
-                                $clase = $asistio ? 'present' : 'absent';
-                                echo "<td class='$clase'>" . ($asistio ? '✔' : '✖') . "</td>";
-                            }
+                <!-- Paginación -->
+                <div class="pagination">
+                    <!-- Botón "Anterior" -->
+                    <?php if ($paginaActual > 1): ?>
+                        <a href="checadas.php?pagina=<?php echo $paginaActual - 1; ?>&modo_filtro=<?php echo $modoFiltro; ?>&fecha=<?php echo $fechaSeleccionada; ?>&search=<?php echo urlencode($searchTerm); ?>" class="pagination-button">Anterior</a>
+                    <?php else: ?>
+                        <span class="pagination-button disabled">Anterior</span>
+                    <?php endif; ?>
 
-                            echo "</tr>";
-                        }
-                        ?>
-                    </tbody>
-                </table>
+                    <!-- Números de página -->
+                    <?php
+                    for ($i = 1; $i <= $totalPaginas; $i++) {
+                        $clase = ($i == $paginaActual) ? 'active' : '';
+                        echo "<a href='checadas.php?pagina=$i&modo_filtro=$modoFiltro&fecha=$fechaSeleccionada&search=" . urlencode($searchTerm) . "' class='$clase'>$i</a>";
+                    }
+                    ?>
+
+                    <!-- Botón "Siguiente" -->
+                    <?php if ($paginaActual < $totalPaginas): ?>
+                        <a href="checadas.php?pagina=<?php echo $paginaActual + 1; ?>&modo_filtro=<?php echo $modoFiltro; ?>&fecha=<?php echo $fechaSeleccionada; ?>&search=<?php echo urlencode($searchTerm); ?>" class="pagination-button">Siguiente</a>
+                    <?php else: ?>
+                        <span class="pagination-button disabled">Siguiente</span>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Flatpickr para los calendarios
-        flatpickr("#fechaDesde", {
-            dateFormat: "Y-m-d",
-            locale: "es"
-        });
-
-        flatpickr("#fechaHasta", {
+        // Flatpickr para el calendario
+        flatpickr("#fecha", {
             dateFormat: "Y-m-d",
             locale: "es"
         });
