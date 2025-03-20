@@ -115,13 +115,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["archivo"])) {
 <body>
     <div class="container">
         <div class="sidebar">
-            <h2>Menú</h2>
+            <div class="sidebar-header">
+                <h2>📊 Menú</h2>
+            </div>
             <ul>
-                <li><a href="checadas.php">Checadas</a></li>
-                <li><a href="empleados.php">Personal</a></li>
-                <li><a href="calculo.php">Calculo</a></li>
-                <li><a href="roles.php">Cargos</a></li>
-                <li><a href="importar.php">Importar</a></li>
+                <li><a href="checadas.php" class="active">🕒 Checadas</a></li>
+                <li><a href="bonos.php" class="active">💰 Bonos</a></li>
+                <li><a href="empleados.php">👨‍💼 Personal</a></li>
+                <li><a href="calculo.php">📉 Cálculo</a></li>
+                <li><a href="roles.php">🏆 Cargos</a></li>
+                <li><a href="importar.php">📂 Importar</a></li>
             </ul>
         </div>
         <div class="content">

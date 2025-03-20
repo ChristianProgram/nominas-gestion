@@ -11,10 +11,10 @@ try {
 
     $id = $_GET['id'];
 
-    // Obtener datos del empleado
-    $sqlEmpleado = "SELECT ID, Nombre, Numero_Empleado, Departamento FROM empleados WHERE ID = :id";
+    // Obtener datos del empleado usando el procedimiento almacenado
+    $sqlEmpleado = "CALL ObtenerEmpleadoPorID(:id)";
     $stmtEmpleado = $pdo->prepare($sqlEmpleado);
-    $stmtEmpleado->bindParam(':id', $id);
+    $stmtEmpleado->bindParam(':id', $id, PDO::PARAM_INT);
     $stmtEmpleado->execute();
     $empleado = $stmtEmpleado->fetch(PDO::FETCH_ASSOC);
 
@@ -22,12 +22,18 @@ try {
         die("Empleado no encontrado.");
     }
 
-    // Obtener la lista de cargos (roles)
-    $sqlRoles = "SELECT id, nombre_cargo FROM roles";
+    // Cerrar el cursor del primer conjunto de resultados
+    $stmtEmpleado->closeCursor();
+
+    // Obtener la lista de cargos (roles) usando el procedimiento almacenado
+    $sqlRoles = "CALL ObtenerRoles()";
     $stmtRoles = $pdo->query($sqlRoles);
     $roles = $stmtRoles->fetchAll(PDO::FETCH_ASSOC);
 
-    // Actualizar cargo (rol)
+    // Cerrar el cursor del segundo conjunto de resultados
+    $stmtRoles->closeCursor();
+
+    // Actualizar cargo (rol) usando el procedimiento almacenado
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (!isset($_POST['departamento'])) {
             die("Cargo no proporcionado.");
@@ -35,10 +41,10 @@ try {
 
         $cargo = (int)$_POST['departamento']; // Convertir a entero
 
-        $sqlUpdate = "UPDATE empleados SET Departamento = :cargo WHERE ID = :id";
+        $sqlUpdate = "CALL ActualizarDepartamentoEmpleado(:id, :cargo)";
         $stmtUpdate = $pdo->prepare($sqlUpdate);
-        $stmtUpdate->bindParam(':cargo', $cargo, PDO::PARAM_INT); // Asegurar que sea un entero
         $stmtUpdate->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmtUpdate->bindParam(':cargo', $cargo, PDO::PARAM_INT);
         $stmtUpdate->execute();
 
         header("Location: empleados.php"); // Redirigir a la lista de empleados
@@ -61,12 +67,16 @@ try {
 <body>
     <div class="container">
         <div class="sidebar">
-            <h2>Menú</h2>
+            <div class="sidebar-header">
+                <h2>📊 Menú</h2>
+            </div>
             <ul>
-                <li><a href="checadas.php">Checadas</a></li>
-                <li><a href="empleados.php">Personal</a></li>
-                <li><a href="calculo.php">Calculo</a></li>
-                <li><a href="importar.php">Importar</a></li>
+                <li><a href="checadas.php" class="active">🕒 Checadas</a></li>
+                <li><a href="bonos.php" class="active">💰 Bonos</a></li>
+                <li><a href="empleados.php">👨‍💼 Personal</a></li>
+                <li><a href="calculo.php">📉 Cálculo</a></li>
+                <li><a href="roles.php">🏆 Cargos</a></li>
+                <li><a href="importar.php">📂 Importar</a></li>
             </ul>
         </div>
         <div class="main-content">

@@ -1,25 +1,43 @@
 <?php
-include '../src/config/db.php'; // Asegúrate de incluir la conexión a la base de datos
+error_reporting(E_ALL); // Mostrar todos los errores
+ini_set('display_errors', 1); // Mostrar errores en pantalla
+
+include '../src/config/db.php'; // Asegúrate de que la ruta sea correcta
 
 // Procesar el formulario para agregar un nuevo rol
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['agregar_rol'])) {
     $nombreCargo = $_POST['nombre_cargo'];
     $sueldoDiario = $_POST['sueldo_diario'];
 
-    $sql = "INSERT INTO roles (nombre_cargo, sueldo_diario) VALUES (:nombre_cargo, :sueldo_diario)";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':nombre_cargo' => $nombreCargo,
-        ':sueldo_diario' => $sueldoDiario
-    ]);
+    try {
+        // Llamar al procedimiento almacenado
+        $sql = "CALL InsertarRol(:nombre_cargo, :sueldo_diario)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':nombre_cargo', $nombreCargo, PDO::PARAM_STR);
+        $stmt->bindParam(':sueldo_diario', $sueldoDiario, PDO::PARAM_STR);
+        $stmt->execute();
+
+        echo "<script>alert('Rol agregado correctamente.'); window.location.href = 'roles.php';</script>";
+    } catch (PDOException $e) {
+        die("Error al agregar el rol: " . $e->getMessage());
+    }
 }
 
 // Procesar la eliminación de un rol
 if (isset($_GET['eliminar'])) {
-    $id = $_GET['eliminar'];
-    $sql = "DELETE FROM roles WHERE id = :id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([':id' => $id]);
+    $rol_id = $_GET['eliminar'];
+
+    try {
+        // Llamar al procedimiento almacenado para eliminar el rol
+        $sql = "CALL EliminarRol(:rol_id)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':rol_id', $rol_id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        echo "<script>alert('Rol eliminado correctamente.'); window.location.href = 'roles.php';</script>";
+    } catch (PDOException $e) {
+        die("Error al eliminar el rol: " . $e->getMessage());
+    }
 }
 
 // Obtener todos los roles
@@ -33,7 +51,7 @@ $roles = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <title>Roles</title>
-    <link rel="stylesheet" href="../public/styles.css">
+    <link rel="stylesheet" href="../public/styles.css"> <!-- Ajusta la ruta del CSS -->
     <style>
         /* Estilos para la tabla */
         .roles-table {
@@ -73,13 +91,16 @@ $roles = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <div class="container">
         <div class="sidebar">
-            <h2>Menú</h2>
+            <div class="sidebar-header">
+                <h2>📊 Menú</h2>
+            </div>
             <ul>
-                <li><a href="checadas.php">Checadas</a></li>
-                <li><a href="empleados.php">Personal</a></li>
-                <li><a href="calculo.php">Cálculo</a></li>
-                <li><a href="roles.php">Cargos</a></li>
-                <li><a href="importar.php">Importar</a></li>
+                <li><a href="checadas.php" class="active">🕒 Checadas</a></li>
+                <li><a href="bonos.php" class="active">💰 Bonos</a></li>
+                <li><a href="empleados.php">👨‍💼 Personal</a></li>
+                <li><a href="calculo.php">📉 Cálculo</a></li>
+                <li><a href="roles.php">🏆 Cargos</a></li>
+                <li><a href="importar.php">📂 Importar</a></li>
             </ul>
         </div>
         <div class="main-content">
@@ -112,7 +133,6 @@ $roles = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td><?php echo htmlspecialchars($rol['nombre_cargo']); ?></td>
                                 <td>$<?php echo number_format($rol['sueldo_diario'], 2); ?></td>
                                 <td>
-                                    <a href="editar_rol.php?id=<?php echo $rol['id']; ?>">Editar</a>
                                     <a href="roles.php?eliminar=<?php echo $rol['id']; ?>" onclick="return confirm('¿Estás seguro de eliminar este rol?');">Eliminar</a>
                                 </td>
                             </tr>

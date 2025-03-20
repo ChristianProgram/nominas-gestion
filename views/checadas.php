@@ -9,7 +9,7 @@ $fechaInicio = '';
 $fechaFin = '';
 
 // Determinar si se selecciona un día o una semana
-$modoFiltro = isset($_GET['modo_filtro']) ? $_GET['modo_filtro'] : 'dia'; // Por defecto, filtrar por día
+$modoFiltro = isset($_GET['modo_filtro']) ? $_GET['modo_filtro'] : 'semana'; // Cambiado a 'semana' por defecto
 
 if ($modoFiltro === 'dia') {
     // Filtrar por un día específico
@@ -189,18 +189,55 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             padding: 5px;
             margin-right: 10px;
         }
+        .falta-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .falta-btn.marcada {
+            background-color: red;
+            color: white;
+        }
+
+        .falta-btn.no-marcada {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+
+        /* Estilos para el fondo de las celdas */
+        .celda-asistencia {
+            padding: 8px;
+            text-align: center;
+        }
+
+        .celda-asistencia.asistio {
+            background-color: green;
+            color: white;
+        }
+
+        .celda-asistencia.falto {
+            background-color: red;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="sidebar">
-            <h2>Menú</h2>
+            <div class="sidebar-header">
+                <h2>📊 Menú</h2>
+            </div>
             <ul>
-                <li><a href="checadas.php">Checadas</a></li>
-                <li><a href="empleados.php">Personal</a></li>
-                <li><a href="calculo.php">Calculo</a></li>
-                <li><a href="roles.php">Cargos</a></li>
-                <li><a href="importar.php">Importar</a></li>
+                <li><a href="checadas.php" class="active">🕒 Checadas</a></li>
+                <li><a href="bonos.php" class="active">💰 Bonos</a></li>
+                <li><a href="empleados.php">👨‍💼 Personal</a></li>
+                <li><a href="calculo.php">📉 Cálculo</a></li>
+                <li><a href="roles.php">🏆 Cargos</a></li>
+                <li><a href="importar.php">📂 Importar</a></li>
             </ul>
         </div>
         <div class="main-content">
@@ -243,6 +280,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <input type="hidden" name="fecha" value="<?php echo $fechaSeleccionada; ?>">
                     <input type="hidden" name="modo_filtro" value="<?php echo $modoFiltro; ?>">
                     <input type="hidden" name="search" value="<?php echo htmlspecialchars($searchTerm); ?>">
+                    <button type="submit" style="margin-top: 20px;">Guardar Faltas</button>
                     <table class="asistencias-table">
                         <thead>
                             <tr>
@@ -287,9 +325,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 // Mostrar la asistencia de cada día en el rango
                                 foreach ($dias as $dia) {
                                     $tieneFalta = in_array($dia, $faltasPorEmpleado[$numeroEmpleado] ?? []);
-                                    $clase = $tieneFalta ? 'absent' : 'present';
-                                    echo "<td class='$clase'>";
-                                    echo "<input type='checkbox' name='faltas[$numeroEmpleado][$dia]' value='1' " . ($tieneFalta ? 'checked' : '') . "> Falta";
+                                    $claseCelda = $tieneFalta ? 'falto' : 'asistio';
+                                    $claseBoton = $tieneFalta ? 'marcada' : 'no-marcada';
+                                    echo "<td class='celda-asistencia $claseCelda'>";
+                                    echo "<input type='hidden' name='faltas[$numeroEmpleado][$dia]' value='" . ($tieneFalta ? '1' : '0') . "'>";
+                                    echo "<button type='button' class='falta-btn $claseBoton' onclick='toggleFalta(this)'>" . ($tieneFalta ? 'Falta Marcada' : 'Marcar Falta') . "</button>";
                                     echo "</td>";
                                 }
 
@@ -298,7 +338,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             ?>
                         </tbody>
                     </table>
-                    <button type="submit" style="margin-top: 20px;">Guardar Faltas</button>
                 </form>
 
                 <!-- Paginación -->
@@ -335,6 +374,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             dateFormat: "Y-m-d",
             locale: "es"
         });
+
+        // Función para cambiar el estado de falta
+        function toggleFalta(btn) {
+            const celda = btn.parentElement;
+            const hiddenInput = btn.previousElementSibling;
+
+            if (btn.classList.contains('marcada')) {
+                // Cambiar a "asistió"
+                btn.classList.remove('marcada');
+                btn.classList.add('no-marcada');
+                btn.textContent = 'Marcar Falta';
+                hiddenInput.value = '0'; // Desmarcar falta
+                celda.classList.remove('falto');
+                celda.classList.add('asistio');
+            } else {
+                // Cambiar a "faltó"
+                btn.classList.remove('no-marcada');
+                btn.classList.add('marcada');
+                btn.textContent = 'Falta Marcada';
+                hiddenInput.value = '1'; // Marcar falta
+                celda.classList.remove('asistio');
+                celda.classList.add('falto');
+            }
+        }
     </script>
 </body>
 </html>
