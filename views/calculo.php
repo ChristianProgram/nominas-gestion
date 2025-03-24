@@ -1,30 +1,39 @@
 <?php
-include '../src/config/db.php'; // Asegúrate de incluir la conexión a la base de datos
+include '../src/config/db.php';
 
-// Obtener la fecha seleccionada o usar la fecha de hoy
-$fechaSeleccionada = isset($_GET['fecha']) ? $_GET['fecha'] : date('Y-m-d');
+try {
+    // Obtener la fecha seleccionada o usar la fecha de hoy
+    $fechaSeleccionada = isset($_GET['fecha']) ? $_GET['fecha'] : date('Y-m-d');
 
-// Calcular el inicio y fin de la semana (lunes a domingo)
-$fechaInicioSemana = date('Y-m-d', strtotime('monday this week', strtotime($fechaSeleccionada)));
-$fechaFinSemana = date('Y-m-d', strtotime('sunday this week', strtotime($fechaSeleccionada)));
+    // Calcular el inicio y fin de la semana (lunes a domingo)
+    $fechaInicioSemana = date('Y-m-d', strtotime('monday this week', strtotime($fechaSeleccionada)));
+    $fechaFinSemana = date('Y-m-d', strtotime('sunday this week', strtotime($fechaSeleccionada)));
 
-// Consulta para obtener los datos de los empleados y sus faltas en la semana
-$sql = "
-    SELECT 
-        e.Numero_Empleado, 
-        e.Nombre,
-        COUNT(f.fecha) AS Faltas_Semana,
-        SUM(CASE WHEN DAYOFWEEK(f.fecha) = 1 THEN 1 ELSE 0 END) AS Domingos_Trabajados
-    FROM empleados e
-    LEFT JOIN faltas f ON e.Numero_Empleado = f.Numero_Empleado 
-        AND f.fecha BETWEEN :fechaInicio AND :fechaFin
-    GROUP BY e.Numero_Empleado
-";
-$stmt = $pdo->prepare($sql);
-$stmt->bindParam(':fechaInicio', $fechaInicioSemana);
-$stmt->bindParam(':fechaFin', $fechaFinSemana);
-$stmt->execute();
-$empleados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Consulta SQL para obtener los resultados de la tabla resultados_nomina2
+    $sql = "
+        SELECT 
+            id_empleado, nombre, numero_empleado, departamento, sueldo_semanal, total_bonos, 
+            faltas, dias_faltas, descuento, resultado_total, fecha_inicio, fecha_fin
+        FROM resultados_nomina2
+        WHERE (fecha_inicio BETWEEN :fechaInicio AND :fechaFin)
+        OR (fecha_fin BETWEEN :fechaInicio AND :fechaFin)
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(':fechaInicio', $fechaInicioSemana, PDO::PARAM_STR);
+    $stmt->bindParam(':fechaFin', $fechaFinSemana, PDO::PARAM_STR);
+
+    $stmt->execute();
+
+    // Obtener los resultados
+    $empleados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Cerrar el cursor para futuras ejecuciones del mismo procedimiento
+    $stmt->closeCursor();
+    
+} catch (PDOException $e) {
+    die("Error en la consulta: " . $e->getMessage());
+}
 ?>
 
 <!DOCTYPE html>
@@ -34,8 +43,68 @@ $empleados = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Cálculo de Nómina</title>
     <link rel="stylesheet" href="../public/styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #1e293b;
+            color: #ffffff;
+            padding: 1rem;
+        }
+        .sidebar-header {
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .sidebar h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar-section {
+            margin-bottom: 1.5rem;
+        }
+        .sidebar-section h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            background-color: #00263F;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            margin: 0.5rem 0;
+        }
+        .sidebar ul li a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .sidebar ul li a:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .sidebar ul li a.active {
+            background:rgb(5, 56, 90);
+            color: white;
+        }
+        .sidebar ul li a i {
+            font-size: 1rem;
+            width: 20px;
+            text-align: center;
+        }
         /* Estilos para la tabla */
         .asistencias-table {
             width: 100%;
@@ -144,74 +213,84 @@ $empleados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
     <div class="container">
-        <div class="sidebar">
+    <div class="sidebar">
             <div class="sidebar-header">
-                <h2>📊 Menú</h2>
+                <h2>Nominas</h2>
             </div>
-            <ul>
-                <li><a href="checadas.php" class="active">🕒 Checadas</a></li>
-                <li><a href="bonos.php" class="active">💰 Bonos</a></li>
-                <li><a href="empleados.php">👨‍💼 Personal</a></li>
-                <li><a href="calculo.php">📉 Cálculo</a></li>
-                <li><a href="roles.php">🏆 Cargos</a></li>
-                <li><a href="importar.php">📂 Importar</a></li>
-            </ul>
+
+            <!-- Sección: Informes -->
+            <div class="sidebar-section">
+                <h3>Informes</h3>
+                <ul>
+                    <li><a href="../public/index.php" class="active"><i class="fas fa-chart-bar"></i> Resumen</a></li>
+                </ul>
+            </div>
+
+            <!-- Sección: Gestionar -->
+            <div class="sidebar-section">
+                <h3>Gestionar</h3>
+                <ul>
+                    <li><a href="../views/checadas.php"><i class="fas fa-calendar-alt"></i> Asistencia</a></li>
+                    <li><a href="../views/empleados.php"><i class="fas fa-users"></i> Empleados</a></li>
+                    <li><a href="../views/calculo.php"><i class="fas fa-calculator"></i> Deducciones</a></li>
+                    <li><a href="../views/bonos.php"><i class="fas fa-gift"></i> Bonos</a></li>
+                    <li><a href="../views/roles.php"><i class="fas fa-briefcase"></i> Cargos</a></li>
+                    <li><a href="../views/importar.php"><i class="fas fa-file-import"></i> Importar datos</a></li>
+                    <li><a href="../views/reportes.php"><i class="fas fa-file-alt"></i> Reportes</a></li>
+                </ul>
+            </div>
+
+            <!-- Sección: Imprimibles -->
+            <div class="sidebar-section">
+                <h3>Imprimibles</h3>
+                <ul>
+                    <li><a href="#"><i class="fas fa-print"></i> Reportes PDF</a></li>
+                    <li><a href="#"><i class="fas fa-file-excel"></i> Exportar Excel</a></li>
+                </ul>
+            </div>
         </div>
         <div class="main-content">
             <div class="content-container">
-                <div class="section-header">
-                    <h1 class="section-title">Cálculo de Nómina</h1>
-                </div>
+                <h1>Cálculo de Nómina</h1>
 
-                <!-- Filtro por semana -->
-                <form method="GET" action="calculo.php" class="filter-form">
+                <!-- Formulario con botón -->
+                <form method="GET" action="calculo.php">
                     <label for="fecha">Selecciona una semana:</label>
-                    <input type="text" id="fecha" name="fecha" value="<?php echo $fechaSeleccionada; ?>" onchange="this.form.submit()">
+                    <input type="date" id="fecha" name="fecha" required>
+                    <button type="submit">Mostrar Nómina</button>
                 </form>
 
-                <!-- Botón para calcular la nómina -->
-                <button class="boton-calcular" onclick="calcularNomina()">Calcular Percepciones</button>
-                <p class="cargando" id="cargando">Calculando... Por favor, espera.</p>
-                <p id="error-message" class="error" style="display: none;">Hubo un error al procesar la solicitud. Por favor, intenta nuevamente.</p>
-
-                <!-- Tabla de Empleados -->
-                <table class="asistencias-table">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Número de Empleado</th>
-                            <th>Faltas</th>
-                            <th>Prima Dominical</th>
-                            <th>Asistencias</th>
-                            <th>Percepción</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($empleados as $empleado): ?>
-                            <?php
-                            // Calcular la prima dominical (20% extra por domingo trabajado)
-                            $primaDominical = $empleado['Domingos_Trabajados'] * 100 * 0.2; // Ejemplo: $100 por día + 20%
-
-                            // Calcular el bono de asistencia (3 días extras si no hay faltas)
-                            $bonoAsistencia = ($empleado['Faltas_Semana'] == 0) ? 3 * 100 : 0; // Ejemplo: $100 por día
-
-                            // Calcular la percepción total
-                            $percepcionTotal = (5 * 100) + $primaDominical + $bonoAsistencia; // 5 días laborales + prima + bono
-                            ?>
+                <!-- Solo mostrar la tabla si hay datos -->
+                <?php if (!empty($empleados)): ?>
+                    <table border="1">
+                        <thead>
                             <tr>
-                                <td><?php echo htmlspecialchars($empleado['Nombre']); ?></td>
-                                <td><?php echo htmlspecialchars($empleado['Numero_Empleado']); ?></td>
-                                <td><?php echo htmlspecialchars($empleado['Faltas_Semana']); ?></td>
-                                <td>$<?php echo number_format($primaDominical, 2); ?></td>
-                                <td><?php echo 5 - $empleado['Faltas_Semana']; ?></td>
-                                <td>$<?php echo number_format($percepcionTotal, 2); ?></td>
+                                <th>Nombre</th>
+                                <th>Número de Empleado</th>
+                                <th>Faltas</th>
+                                <th>Días con Faltas</th>
+                                <th>Total de Bonos</th>
+                                <th>Descuento</th>
+                                <th>Total Nómina</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-
-                <!-- Contenedor para la tabla de resultados -->
-                <div id="resultados"></div>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($empleados as $empleado): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($empleado['nombre']); ?></td>
+                                    <td><?php echo htmlspecialchars($empleado['numero_empleado']); ?></td>
+                                    <td><?php echo htmlspecialchars($empleado['faltas']); ?></td>
+                                    <td><?php echo htmlspecialchars($empleado['dias_faltas']); ?></td>
+                                    <td>$<?php echo number_format($empleado['total_bonos'], 2); ?></td>
+                                    <td>-$<?php echo number_format($empleado['descuento'], 2); ?></td>
+                                    <td>$<?php echo number_format($empleado['resultado_total'], 2); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <p>No se encontraron resultados para la semana seleccionada.</p>
+                <?php endif; ?>
             </div>
         </div>
     </div>

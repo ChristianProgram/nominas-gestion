@@ -1,5 +1,5 @@
 <?php
-include '../src/config/db.php'; // Asegúrate de que la ruta sea correcta
+include '../src/config/db.php';
 
 // Obtener el término de búsqueda si se proporciona
 $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -23,22 +23,218 @@ $empleados = $stmtEmpleados->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <title>Lista de Empleados</title>
-    <link rel="stylesheet" href="../public/styles.css"> <!-- Ajusta la ruta del CSS -->
+    <link rel="stylesheet" href="../public/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .asistencias-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .asistencias-table th, .asistencias-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        .asistencias-table th {
+            background-color: #f2f2f2;
+        }
+        .present {
+            background-color: green;
+            color: white;
+        }
+        .absent {
+            background-color: red;
+            color: white;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pagination a, .pagination span {
+            margin: 0 5px;
+            text-decoration: none;
+            color: #333;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+        .pagination a.active {
+            font-weight: bold;
+            color: #000;
+            background-color: #f2f2f2;
+        }
+        .pagination a:hover:not(.disabled) {
+            background-color: #ddd;
+        }
+        .pagination .disabled {
+            color: #aaa;
+            cursor: not-allowed;
+            background-color: #f9f9f9;
+        }
+        .pagination-button {
+            display: inline-block;
+            padding: 8px 12px;
+            margin: 0 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            transition: background-color 0.3s ease;
+        }
+        .pagination-button:hover:not(.disabled) {
+            background-color: #ddd;
+        }
+        .pagination-button.disabled {
+            color: #aaa;
+            cursor: not-allowed;
+            background-color: #f9f9f9;
+        }
+        .filter-form {
+            margin-bottom: 20px;
+        }
+        .filter-form label {
+            margin-right: 10px;
+        }
+        .filter-form select, .filter-form input {
+            padding: 5px;
+            margin-right: 10px;
+        }
+        .falta-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .falta-btn.marcada {
+            background-color: red;
+            color: white;
+        }
+
+        .falta-btn.no-marcada {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+
+        /* Estilos para el fondo de las celdas */
+        .celda-asistencia {
+            padding: 8px;
+            text-align: center;
+        }
+
+        .celda-asistencia.asistio {
+            background-color: green;
+            color: white;
+        }
+
+        .celda-asistencia.falto {
+            background-color: red;
+            color: white;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #1e293b;
+            color: #ffffff;
+            padding: 1rem;
+        }
+        .sidebar-header {
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .sidebar h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar-section {
+            margin-bottom: 1.5rem;
+        }
+        .sidebar-section h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            background-color: #00263F;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            margin: 0.5rem 0;
+        }
+        .sidebar ul li a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .sidebar ul li a:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .sidebar ul li a.active {
+            background:rgb(5, 56, 90);
+            color: white;
+        }
+        .sidebar ul li a i {
+            font-size: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+    </style>
 </head>
 <body>
     <div class="container">
-        <div class="sidebar">
+    <div class="sidebar">
             <div class="sidebar-header">
-                <h2>📊 Menú</h2>
+                <h2>Nominas</h2>
             </div>
-            <ul>
-                <li><a href="checadas.php" class="active">🕒 Checadas</a></li>
-                <li><a href="bonos.php" class="active">💰 Bonos</a></li>
-                <li><a href="empleados.php">👨‍💼 Personal</a></li>
-                <li><a href="calculo.php">📉 Cálculo</a></li>
-                <li><a href="roles.php">🏆 Cargos</a></li>
-                <li><a href="importar.php">📂 Importar</a></li>
-            </ul>
+
+            <!-- Sección: Informes -->
+            <div class="sidebar-section">
+                <h3>Informes</h3>
+                <ul>
+                    <li><a href="../public/index.php" class="active"><i class="fas fa-chart-bar"></i> Resumen</a></li>
+                </ul>
+            </div>
+
+            <!-- Sección: Gestionar -->
+            <div class="sidebar-section">
+                <h3>Gestionar</h3>
+                <ul>
+                    <li><a href="../views/checadas.php"><i class="fas fa-calendar-alt"></i> Asistencia</a></li>
+                    <li><a href="../views/empleados.php"><i class="fas fa-users"></i> Empleados</a></li>
+                    <li><a href="../views/calculo.php"><i class="fas fa-calculator"></i> Deducciones</a></li>
+                    <li><a href="../views/bonos.php"><i class="fas fa-gift"></i> Bonos</a></li>
+                    <li><a href="../views/roles.php"><i class="fas fa-briefcase"></i> Cargos</a></li>
+                    <li><a href="../views/importar.php"><i class="fas fa-file-import"></i> Importar datos</a></li>
+                    <li><a href="../views/reportes.php"><i class="fas fa-file-alt"></i> Reportes</a></li>
+                </ul>
+            </div>
+
+            <!-- Sección: Imprimibles -->
+            <div class="sidebar-section">
+                <h3>Imprimibles</h3>
+                <ul>
+                    <li><a href="#"><i class="fas fa-print"></i> Reportes PDF</a></li>
+                    <li><a href="#"><i class="fas fa-file-excel"></i> Exportar Excel</a></li>
+                </ul>
+            </div>
         </div>
         <div class="main-content">
             <div class="content-container">

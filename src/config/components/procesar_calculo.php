@@ -1,5 +1,5 @@
 <?php
-include 'db.php'; // Asegúrate de que este archivo contiene la conexión a la base de datos
+include 'db.php';
 
 try {
     // Obtener todos los empleados

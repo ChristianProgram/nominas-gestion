@@ -1,5 +1,4 @@
 <?php
-// Configuración de la base de datos
 $host = 'localhost';
 $dbname = 'checadora';
 $username = 'root';
