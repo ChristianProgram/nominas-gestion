@@ -226,16 +226,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         /* Sidebar */
+        :root {
+            --primary-color: #00263F;
+            --secondary-color: #3b82f6;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --light-bg: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-color: #334155;
+            --text-light: #64748b;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--light-bg);
+        }
+        
+        /* Sidebar */
         .sidebar {
             width: 250px;
             background-color: #1e293b;
             color: #ffffff;
             padding: 1rem;
+            flex-shrink: 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         }
+        
         .sidebar-header {
             padding-bottom: 1rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
         }
+        
         .sidebar h2 {
             margin: 0;
             font-size: 1.5rem;
@@ -243,25 +270,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             display: flex;
             align-items: center;
             gap: 12px;
+            color: #ffffff;
         }
+        
         .sidebar-section {
             margin-bottom: 1.5rem;
         }
+        
         .sidebar-section h3 {
-            font-size: 1rem;
+            font-size: 0.85rem;
             font-weight: 600;
             color: rgba(255, 255, 255, 0.7);
             margin-bottom: 0.5rem;
             text-transform: uppercase;
-            background-color: #00263F;
+            padding: 0.5rem 1rem;
+            background-color: rgba(0, 38, 63, 0.5);
+            border-radius: 4px;
         }
+        
         .sidebar ul {
             list-style: none;
             padding: 0;
+            margin: 0;
         }
+        
         .sidebar ul li {
-            margin: 0.5rem 0;
+            margin: 0.25rem 0;
         }
+        
         .sidebar ul li a {
             color: rgba(255, 255, 255, 0.85);
             text-decoration: none;
@@ -271,34 +307,167 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             padding: 0.75rem 1rem;
             border-radius: 4px;
             transition: all 0.2s ease;
+            font-size: 0.95rem;
         }
+        
         .sidebar ul li a:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
         }
+        
         .sidebar ul li a.active {
-            background:rgb(5, 56, 90);
+            background: rgba(5, 56, 90, 0.8);
             color: white;
+            font-weight: 500;
         }
+        
         .sidebar ul li a i {
             font-size: 1rem;
             width: 20px;
             text-align: center;
+        }
+        
+        /* Contenido principal */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            background-color: #fff;
+            overflow-x: auto;
+        }
+        
+        .section-header {
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-title {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        /* Tabla de asistencia */
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .attendance-table th {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+        }
+        
+        .attendance-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        .attendance-table tr:nth-child(even) {
+            background-color: var(--light-bg);
+        }
+        
+        .attendance-table tr:hover {
+            background-color: #f1f5f9;
+        }
+        
+        /* Estilos para celdas de asistencia */
+        .attendance-cell {
+            padding: 0.5rem;
+            text-align: center;
+            border-radius: 4px;
+        }
+        
+        .present {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .absent {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        /* Botones de asistencia */
+        .attendance-btn {
+            padding: 0.5rem 0.75rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+        
+        .attendance-btn.present {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .attendance-btn.absent {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .attendance-btn:hover {
+            opacity: 0.9;
+        }
+        
+        /* Botón de guardar */
+        .save-button {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 1.5rem;
+        }
+        
+        .save-button:hover {
+            background-color: #0f9e6e;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                padding: 1rem;
+            }
         }
 
     </style>
 </head>
 <body>
     <div class="container">
-    <div class="sidebar">
+        <div class="sidebar">
             <div class="sidebar-header">
-                <h2>Nominas</h2>
+                <h2>Nóminas</h2>
             </div>
 
             <!-- Sección: Informes -->
             <div class="sidebar-section">
                 <h3>Informes</h3>
                 <ul>
-                    <li><a href="../public/index.php" class="active"><i class="fas fa-chart-bar"></i> Resumen</a></li>
+                    <li><a href="../public/index.php"><i class="fas fa-chart-bar"></i> Resumen</a></li>
                 </ul>
             </div>
 
@@ -306,13 +475,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="sidebar-section">
                 <h3>Gestionar</h3>
                 <ul>
-                    <li><a href="../views/checadas.php"><i class="fas fa-calendar-alt"></i> Asistencia</a></li>
+                    <li><a href="../views/checadas.php" class="active"><i class="fas fa-calendar-alt"></i> Asistencia</a></li>
                     <li><a href="../views/empleados.php"><i class="fas fa-users"></i> Empleados</a></li>
                     <li><a href="../views/calculo.php"><i class="fas fa-calculator"></i> Deducciones</a></li>
                     <li><a href="../views/bonos.php"><i class="fas fa-gift"></i> Bonos</a></li>
                     <li><a href="../views/roles.php"><i class="fas fa-briefcase"></i> Cargos</a></li>
                     <li><a href="../views/importar.php"><i class="fas fa-file-import"></i> Importar datos</a></li>
-                    <li><a href="../views/reportes.php"><i class="fas fa-file-alt"></i> Reportes</a></li>
                 </ul>
             </div>
 
@@ -320,8 +488,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="sidebar-section">
                 <h3>Imprimibles</h3>
                 <ul>
-                    <li><a href="#"><i class="fas fa-print"></i> Reportes PDF</a></li>
-                    <li><a href="#"><i class="fas fa-file-excel"></i> Exportar Excel</a></li>
+                    <li><a href="../views/reportes.php"><i class="fas fa-file-alt"></i> Reportes PDF</a></li>
                 </ul>
             </div>
         </div>
@@ -366,10 +533,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <input type="hidden" name="modo_filtro" value="<?php echo $modoFiltro; ?>">
                     <input type="hidden" name="search" value="<?php echo htmlspecialchars($searchTerm); ?>">
                     <button type="submit" style="margin-top: 20px;">Guardar Faltas</button>
-                    <table class="asistencias-table">
+                    <table class="attendance-table">
                         <thead>
                             <tr>
-                                <th>Número de Empleado</th>
+                                <th>N° Empleado</th>
                                 <th>Nombre</th>
                                 <?php
                                 // Mostrar los días en el rango
@@ -379,48 +546,62 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 $interval = DateInterval::createFromDateString('1 day');
                                 $periodo = new DatePeriod($inicio, $interval, $fin->modify('+1 day'));
 
-                                // Días en español
+                                // Días en español abreviados
                                 $diasSemana = [
-                                    'Monday' => 'Lunes', 
-                                    'Tuesday' => 'Martes', 
-                                    'Wednesday' => 'Miércoles', 
-                                    'Thursday' => 'Jueves', 
-                                    'Friday' => 'Viernes', 
-                                    'Saturday' => 'Sábado', 
-                                    'Sunday' => 'Domingo'
+                                    'Monday' => 'Lun', 
+                                    'Tuesday' => 'Mar', 
+                                    'Wednesday' => 'Mié', 
+                                    'Thursday' => 'Jue', 
+                                    'Friday' => 'Vie', 
+                                    'Saturday' => 'Sáb', 
+                                    'Sunday' => 'Dom'
                                 ];
 
                                 foreach ($periodo as $dia) {
-                                    $diaNombre = $dia->format('l'); // Obtiene el nombre del día en inglés
-                                    $diaNombreEspañol = $diasSemana[$diaNombre]; // Traduce al español
-                                    echo "<th>" . $diaNombreEspañol . " (" . $dia->format('Y-m-d') . ")</th>";
+                                    $diaNombre = $dia->format('l');
+                                    $diaNombreEspañol = $diasSemana[$diaNombre];
+                                    $fechaFormateada = $dia->format('d/m');
+                                    echo "<th title='$diaNombreEspañol'>$diaNombreEspañol<br><small>$fechaFormateada</small></th>";
                                     $dias[] = $dia->format('Y-m-d');
                                 }
                                 ?>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php
-                            foreach ($empleados as $empleado) {
-                                $numeroEmpleado = $empleado['Numero_Empleado'];
-                                echo "<tr>";
-                                echo "<td>" . $empleado['Numero_Empleado'] . "</td>";
-                                echo "<td>" . $empleado['Nombre'] . "</td>";
-
-                                // Mostrar la asistencia de cada día en el rango
-                                foreach ($dias as $dia) {
-                                    $tieneFalta = in_array($dia, $faltasPorEmpleado[$numeroEmpleado] ?? []);
-                                    $claseCelda = $tieneFalta ? 'falto' : 'asistio';
-                                    $claseBoton = $tieneFalta ? 'marcada' : 'no-marcada';
-                                    echo "<td class='celda-asistencia $claseCelda'>";
-                                    echo "<input type='hidden' name='faltas[$numeroEmpleado][$dia]' value='" . ($tieneFalta ? '1' : '0') . "'>";
-                                    echo "<button type='button' class='falta-btn $claseBoton' onclick='toggleFalta(this)'>" . ($tieneFalta ? 'Falta Marcada' : 'Marcar Falta') . "</button>";
-                                    echo "</td>";
-                                }
-
-                                echo "</tr>";
-                            }
-                            ?>
+                            <?php if (!empty($empleados)): ?>
+                                <?php foreach ($empleados as $empleado): ?>
+                                    <?php
+                                    $numeroEmpleado = $empleado['Numero_Empleado'];
+                                    ?>
+                                    <tr>
+                                        <td><?php echo $empleado['Numero_Empleado']; ?></td>
+                                        <td style="text-align: left;"><?php echo $empleado['Nombre']; ?></td>
+                                        
+                                        <?php foreach ($dias as $dia): ?>
+                                            <?php
+                                            $tieneFalta = in_array($dia, $faltasPorEmpleado[$numeroEmpleado] ?? []);
+                                            $claseCelda = $tieneFalta ? 'absent' : 'present';
+                                            $textoBoton = $tieneFalta ? 'Falta' : 'Presente';
+                                            ?>
+                                            <td class="attendance-cell <?php echo $claseCelda; ?>">
+                                                <input type="hidden" name="faltas[<?php echo $numeroEmpleado; ?>][<?php echo $dia; ?>]" value="<?php echo $tieneFalta ? '1' : '0'; ?>">
+                                                <button type="button" class="attendance-btn <?php echo $claseCelda; ?>" onclick="toggleAttendance(this)">
+                                                    <?php echo $textoBoton; ?>
+                                                </button>
+                                            </td>
+                                        <?php endforeach; ?>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="<?php echo count($dias) + 2; ?>" style="text-align: center; padding: 2rem;">
+                                        <div style="color: var(--text-light);">
+                                            <i class="fas fa-user-slash" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                                            <p>No se encontraron empleados</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </form>
@@ -459,28 +640,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             dateFormat: "Y-m-d",
             locale: "es"
         });
-
-        // Función para cambiar el estado de falta
-        function toggleFalta(btn) {
-            const celda = btn.parentElement;
-            const hiddenInput = btn.previousElementSibling;
-
-            if (btn.classList.contains('marcada')) {
-                // Cambiar a "asistió"
-                btn.classList.remove('marcada');
-                btn.classList.add('no-marcada');
-                btn.textContent = 'Marcar Falta';
-                hiddenInput.value = '0'; // Desmarcar falta
-                celda.classList.remove('falto');
-                celda.classList.add('asistio');
+        
+        // Función para cambiar el estado de asistencia
+        function toggleAttendance(btn) {
+            const cell = btn.parentElement;
+            const hiddenInput = cell.querySelector('input[type="hidden"]');
+            
+            if (btn.classList.contains('present')) {
+                // Cambiar a falta
+                btn.classList.remove('present');
+                btn.classList.add('absent');
+                btn.textContent = 'Falta';
+                hiddenInput.value = '1';
+                cell.classList.remove('present');
+                cell.classList.add('absent');
             } else {
-                // Cambiar a "faltó"
-                btn.classList.remove('no-marcada');
-                btn.classList.add('marcada');
-                btn.textContent = 'Falta Marcada';
-                hiddenInput.value = '1'; // Marcar falta
-                celda.classList.remove('asistio');
-                celda.classList.add('falto');
+                // Cambiar a presente
+                btn.classList.remove('absent');
+                btn.classList.add('present');
+                btn.textContent = 'Presente';
+                hiddenInput.value = '0';
+                cell.classList.remove('absent');
+                cell.classList.add('present');
             }
         }
     </script>

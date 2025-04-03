@@ -7,12 +7,11 @@ function contarEmpleados($pdo) {
     try {
         // Llamar al procedimiento almacenado
         $stmt = $pdo->query("CALL ContarEmpleados()");
-        $result = $stmt->fetch(PDO::FETCH_ASSOC); // Obtener el resultado
-        return $result['total_empleados']; // Devolver el número de empleados
+        $result = $stmt->fetch(PDO::FETCH_ASSOC); 
+        return $result['total_empleados']; 
     } catch (PDOException $e) {
-        // Manejar errores
         error_log("Error al contar empleados: " . $e->getMessage());
-        return 0; // En caso de error, devolvemos 0
+        return 0; 
     }
 }
 
@@ -69,160 +68,279 @@ $totalEmpleados = contarEmpleados($pdo);
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Nominas</title>
     <link rel="stylesheet" href="../public/styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <!-- FontAwesome para íconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Estilos generales */
+        :root {
+            --primary-color: #00263F;
+            --secondary-color: #3b82f6;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --light-bg: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-color: #334155;
+            --text-light: #64748b;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f9;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             margin: 0;
             padding: 0;
+            color: var(--text-color);
+            background-color: var(--light-bg);
+            line-height: 1.5;
         }
+        
         .container {
             display: flex;
             min-height: 100vh;
         }
-
-        /* Sidebar */
+        
+        /* Sidebar (mantenido intacto) */
         .sidebar {
             width: 250px;
             background-color: #1e293b;
             color: #ffffff;
             padding: 1rem;
+            flex-shrink: 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         }
-        .sidebar-header {
-            padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .sidebar h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .sidebar-section {
-            margin-bottom: 1.5rem;
-        }
-        .sidebar-section h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            background-color: #00263F;
-        }
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-        }
-        .sidebar ul li {
-            margin: 0.5rem 0;
-        }
-        .sidebar ul li a {
-            color: rgba(255, 255, 255, 0.85);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 0.75rem 1rem;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-        }
-        .sidebar ul li a:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        .sidebar ul li a.active {
-            background:rgb(5, 56, 90);
-            color: white;
-        }
-        .sidebar ul li a i {
-            font-size: 1rem;
-            width: 20px;
-            text-align: center;
-        }
-
-        /* Contenido principal */
+        
+        /* Contenido principal mejorado */
         .content {
             flex: 1;
-            padding: 2rem;
+            padding: 2rem 2.5rem;
             background-color: #ffffff;
+            overflow-y: auto;
         }
-
-        /* Tarjetas del dashboard */
-        .dashboard {
+        
+        /* Header del contenido */
+        .content-header {
             display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
             gap: 1rem;
+        }
+        
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0;
+        }
+        
+        /* Reloj mejorado */
+        .clock-widget {
+            background: white;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 180px;
+            transition: var(--transition);
+        }
+        
+        .clock-widget:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .clock-title {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .clock-title a {
+            color: inherit;
+            text-decoration: none;
+        }
+        
+        .clock-title a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Tarjetas del dashboard mejoradas */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            border-left: 4px solid;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card.gray {
+            border-color: #64748b;
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        }
+        
+        .stat-card.green {
+            border-color: var(--success-color);
+            background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
+        }
+        
+        .stat-card.red {
+            border-color: var(--danger-color);
+            background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+        }
+        
+        .stat-card.blue {
+            border-color: var(--secondary-color);
+            background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin: 0;
+        }
+        
+        /* Sección de gráficas mejorada */
+        .analytics-section {
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
             margin-bottom: 2rem;
         }
-        .card {
-            flex: 1;
-            padding: 1.5rem;
-            border-radius: 8px;
-            color: #fff;
-            text-align: center;
-            font-size: 1.2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
-        .card.gray { background: #64748b; }
-        .card.green { background: #16a34a; }
-        .card.orange { background: #f97316; }
-        .card.red { background: #dc2626; }
-
-        /* Filtros y gráfica */
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 0;
+        }
+        
+        /* Filtros mejorados */
         .filters-container {
             display: flex;
             gap: 1rem;
-            margin-bottom: 1.5rem;
             align-items: center;
+            flex-wrap: wrap;
         }
-        .flatpickr-input {
-            padding: 0.5rem;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            font-size: 1rem;
-            width: 200px;
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .period-selector {
-            padding: 0.5rem;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            font-size: 1rem;
+        
+        .filter-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            white-space: nowrap;
         }
-        .chart-container {
-            margin-top: 2rem;
-            background: #fff;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        
+        .flatpickr-input, .period-selector {
+            padding: 0.6rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            transition: var(--transition);
         }
-        .btn-generar {
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
+        
+        .flatpickr-input:focus, .period-selector:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        .btn {
+            padding: 0.6rem 1.25rem;
+            border-radius: 6px;
             border: none;
-            background-color: #16a34a;
-            color: white;
-            font-size: 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.2s ease;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-
-        .btn-generar:hover {
-            background-color: #15803d;
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        
+        /* Gráfica mejorada */
+        .chart-container {
+            margin-top: 1rem;
+            position: relative;
+            height: 400px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .content {
+                padding: 1.5rem;
+            }
+            
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
+        <!-- Sidebar (mantenido intacto) -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <h2>Nominas</h2>
+                <h2>Nóminas</h2>
             </div>
 
             <!-- Sección: Informes -->
@@ -243,7 +361,6 @@ $totalEmpleados = contarEmpleados($pdo);
                     <li><a href="../views/bonos.php"><i class="fas fa-gift"></i> Bonos</a></li>
                     <li><a href="../views/roles.php"><i class="fas fa-briefcase"></i> Cargos</a></li>
                     <li><a href="../views/importar.php"><i class="fas fa-file-import"></i> Importar datos</a></li>
-                    <li><a href="../views/reportes.php"><i class="fas fa-file-alt"></i> Reportes</a></li>
                 </ul>
             </div>
 
@@ -251,36 +368,83 @@ $totalEmpleados = contarEmpleados($pdo);
             <div class="sidebar-section">
                 <h3>Imprimibles</h3>
                 <ul>
-                    <li><a href="#"><i class="fas fa-print"></i> Reportes PDF</a></li>
-                    <li><a href="#"><i class="fas fa-file-excel"></i> Exportar Excel</a></li>
+                    <li><a href="../views/reportes.php"><i class="fas fa-file-alt"></i> Reportes PDF</a></li>
                 </ul>
             </div>
         </div>
-
-        <!-- Contenido principal -->
+        
+        <!-- Contenido principal mejorado -->
         <div class="content">
-            <!-- Tarjetas del dashboard -->
-            <h1>Informe Diario</h1>
-            <div class="dashboard">
-                <div class="card gray"><?php echo $totalEmpleados; ?><br>Empleados Totales</div>
-                <!-- Se elimino esta funcion debido a que no se logra hacer funcionar, esto se pondra en la seccion de Reportes -->
-                <!-- <div class="card red"><?php echo $faltasHoy; ?><br>Faltas</div> -->
-            </div>
-
-            <!-- Filtros y gráfica -->
-            <div class="chart-container">
-            <h3>Informe de Faltas por Departamento</h3>
-                <div class="filters-container">
-                    <input type="text" id="datePicker" class="flatpickr-input" placeholder="Selecciona una fecha">
-                    <select id="periodSelector" class="period-selector">
-                        <option value="semanal">Semanal</option>
-                        <option value="mensual">Mensual</option>
-                        <option value="anual">Anual</option>
-                    </select>
-                    <button id="generarEstadisticas" class="btn-generar">Generar Estadísticas</button>
+            <!-- Header con título y reloj -->
+            <div class="content-header">
+                <h1 class="page-title">Informe Diario</h1>
+                <div class="clock-widget">
+                    <span class="clock-title"><a href="https://www.zeitverschiebung.net/es/city/3981941">Hora en Tepic, MX</a></span>
+                    <iframe src="https://www.zeitverschiebung.net/clock-widget-iframe-v2?language=es&size=small&timezone=America%2FMazatlan" 
+                            width="160" height="90" frameborder="0" seamless title="Reloj de Tepic"></iframe>
                 </div>
-            <!-- Asegúrate de que este canvas tenga el ID "faltasChart" -->
-                <canvas id="faltasChart"></canvas>
+            </div>
+            
+            <!-- Tarjetas de estadísticas -->
+            <div class="dashboard-cards">
+                <div class="stat-card gray">
+                    <div class="stat-value"><?php echo $totalEmpleados; ?></div>
+                    <p class="stat-label">Empleados Totales</p>
+                </div>
+                
+                <!-- Puedes agregar más tarjetas según necesites -->
+                <!-- Ejemplo de tarjeta adicional (descomenta si la necesitas) -->
+                <!--
+                <div class="stat-card blue">
+                    <div class="stat-value">24</div>
+                    <p class="stat-label">Nuevos este mes</p>
+                </div>
+                -->
+                
+                <!--
+                <div class="stat-card green">
+                    <div class="stat-value">92%</div>
+                    <p class="stat-label">Asistencia hoy</p>
+                </div>
+                -->
+                
+                <!--
+                <div class="stat-card red">
+                    <div class="stat-value">5</div>
+                    <p class="stat-label">Faltas hoy</p>
+                </div>
+                -->
+            </div>
+            
+            <!-- Sección de análisis -->
+            <div class="analytics-section">
+                <div class="section-header">
+                    <h2 class="section-title">Informe de Faltas por Departamento</h2>
+                    
+                    <div class="filters-container">
+                        <div class="filter-group">
+                            <span class="filter-label">Rango de fechas:</span>
+                            <input type="text" id="datePicker" class="flatpickr-input" placeholder="Seleccionar fechas">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <span class="filter-label">Periodo:</span>
+                            <select id="periodSelector" class="period-selector">
+                                <option value="semanal">Semanal</option>
+                                <option value="mensual">Mensual</option>
+                                <option value="anual">Anual</option>
+                            </select>
+                        </div>
+                        
+                        <button id="generarEstadisticas" class="btn btn-primary">
+                            <i class="fas fa-chart-line"></i> Generar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="faltasChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -288,146 +452,186 @@ $totalEmpleados = contarEmpleados($pdo);
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-        // Inicializar Flatpickr para selección de rango
-        let datePicker = flatpickr("#datePicker", {
-            mode: 'range', // Permitir selección de rango
-            dateFormat: "Y-m-d",
-            defaultDate: "today",
-        });
+            // Inicializar Flatpickr en español
+            let datePicker = flatpickr("#datePicker", {
+                mode: 'range',
+                dateFormat: "Y-m-d",
+                defaultDate: "today",
+                locale: "es",
+                allowInput: true
+            });
 
-        // Inicializar la gráfica (con colores variados)
-        const colores = [
-            '#dc2626', '#2563eb', '#16a34a', '#d97706', '#9333ea', '#f43f5e', '#0d9488', '#f59e0b'
-        ];
-        const ctx = document.getElementById('faltasChart').getContext('2d');
-        const faltasChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: [], // Inicialmente vacío
-                datasets: [{
-                    label: 'Faltas',
-                    data: [], // Inicialmente vacío
-                    backgroundColor: colores, // Usar el array de colores
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false,
-                    }
+            // Colores para la gráfica
+            const chartColors = [
+                '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', 
+                '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#d946ef'
+            ];
+            
+            // Inicializar gráfica con opciones mejoradas
+            const ctx = document.getElementById('faltasChart').getContext('2d');
+            const faltasChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Faltas',
+                        data: [],
+                        backgroundColor: chartColors,
+                        borderColor: '#ffffff',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Faltas'
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw}`;
+                                }
+                            }
                         }
                     },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Departamentos'
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false,
+                                color: '#e2e8f0'
+                            },
+                            ticks: {
+                                color: '#64748b'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Número de Faltas',
+                                color: '#64748b',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#64748b'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Departamentos',
+                                color: '#64748b',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
                         }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeInOutQuart'
                     }
                 }
-            }
-        });
+            });
 
-        // Función para actualizar la gráfica
-        function updateChart() {
-            const selectedPeriod = periodSelector.value;
-            const selectedDates = datePicker.selectedDates;
+            // Función para actualizar la gráfica
+            async function updateChart() {
+                const selectedPeriod = document.getElementById('periodSelector').value;
+                const selectedDates = datePicker.selectedDates;
 
-            if (!selectedDates || selectedDates.length < 2) {
-                alert("Por favor, selecciona un rango de fechas.");
-                return;
-            }
-
-            let fechaInicio, fechaFin;
-
-            if (selectedPeriod === 'semanal') {
-                // Asegurarse de que el rango seleccionado sea exactamente de 7 días
-                const diferenciaDias = (selectedDates[1] - selectedDates[0]) / (1000 * 60 * 60 * 24);
-                if (diferenciaDias !== 6) {
-                    alert("Por favor, selecciona un rango de exactamente 7 días (una semana).");
+                if (!selectedDates || selectedDates.length < 2) {
+                    showAlert('Por favor, selecciona un rango de fechas válido', 'error');
                     return;
                 }
-                fechaInicio = selectedDates[0].toISOString().split('T')[0]; // Fecha inicial
-                fechaFin = selectedDates[1].toISOString().split('T')[0]; // Fecha final
-            } else if (selectedPeriod === 'mensual') {
-                // Seleccionar el primer y último día del mes
-                fechaInicio = selectedDates[0].toISOString().substring(0, 7) + '-01'; // Primer día del mes
-                const finMes = new Date(selectedDates[0]);
-                finMes.setMonth(finMes.getMonth() + 1);
-                finMes.setDate(0); // Último día del mes
-                fechaFin = finMes.toISOString().split('T')[0]; // Formatear como YYYY-MM-DD
-            } else if (selectedPeriod === 'anual') {
-                // Seleccionar el primer y último día del año
-                fechaInicio = selectedDates[0].toISOString().substring(0, 4) + '-01-01'; // Primer día del año
-                fechaFin = selectedDates[0].toISOString().substring(0, 4) + '-12-31'; // Último día del año
-            }
 
-            // Obtener datos de faltas por departamento desde el servidor (usando AJAX)
-            fetch(`obtener_faltas_por_departamento.php?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`)
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Datos recibidos del servidor:", data); // Depuración
+                let fechaInicio, fechaFin;
 
-                    // Verificar si data es un array
-                    if (Array.isArray(data)) {
-                        // Verificar si hay datos
-                        if (data.length > 0) {
-                            // Asignar los labels y los datos a la gráfica
-                            faltasChart.data.labels = data.map(item => item.area); // Cambiar 'departamento' por 'area'
-                            faltasChart.data.datasets[0].data = data.map(item => item.total_faltas);
-
-                            console.log("Labels:", faltasChart.data.labels); // Depuración
-                            console.log("Datos:", faltasChart.data.datasets[0].data); // Depuración
-
-                            // Actualizar la gráfica
-                            faltasChart.update();
-                        } else {
-                            console.warn("No hay datos para el rango de fechas seleccionado."); // Depuración
-                            alert("No hay datos para el rango de fechas seleccionado.");
+                try {
+                    if (selectedPeriod === 'semanal') {
+                        const diffDays = Math.round((selectedDates[1] - selectedDates[0]) / (1000 * 60 * 60 * 24));
+                        if (diffDays !== 6) {
+                            showAlert('Selecciona exactamente 7 días para el periodo semanal', 'warning');
+                            return;
                         }
-                    } else {
-                        console.error("Error: La respuesta del servidor no es un array.", data); // Depuración
-                        alert("Error al obtener los datos. Por favor, inténtalo de nuevo.");
+                        fechaInicio = formatDate(selectedDates[0]);
+                        fechaFin = formatDate(selectedDates[1]);
+                    } else if (selectedPeriod === 'mensual') {
+                        fechaInicio = selectedDates[0].toISOString().substring(0, 7) + '-01';
+                        const endMonth = new Date(selectedDates[0]);
+                        endMonth.setMonth(endMonth.getMonth() + 1);
+                        endMonth.setDate(0);
+                        fechaFin = formatDate(endMonth);
+                    } else if (selectedPeriod === 'anual') {
+                        fechaInicio = selectedDates[0].toISOString().substring(0, 4) + '-01-01';
+                        fechaFin = selectedDates[0].toISOString().substring(0, 4) + '-12-31';
                     }
-                })
-                .catch(error => {
-                    console.error("Error al obtener datos de faltas:", error); // Depuración
-                    alert("Error al obtener los datos. Por favor, inténtalo de nuevo.");
-                });
-        }
 
-        // Seleccionar período
-        const periodSelector = document.getElementById('periodSelector');
-        periodSelector.addEventListener('change', () => {
-            const selectedPeriod = periodSelector.value;
+                    // Mostrar loader
+                    document.getElementById('generarEstadisticas').innerHTML = 
+                        '<i class="fas fa-spinner fa-spin"></i> Cargando...';
 
-            if (selectedPeriod === 'semanal') {
-                datePicker.set('mode', 'range'); // Cambiar a modo rango
-                datePicker.set('dateFormat', 'Y-m-d');
-            } else if (selectedPeriod === 'mensual') {
-                datePicker.set('mode', 'single'); // Cambiar a modo single para seleccionar un mes
-                datePicker.set('dateFormat', 'Y-m');
-            } else if (selectedPeriod === 'anual') {
-                datePicker.set('mode', 'single'); // Cambiar a modo single para seleccionar un año
-                datePicker.set('dateFormat', 'Y');
+                    const response = await fetch(
+                        `obtener_faltas_por_departamento.php?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
+                    );
+                    
+                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                    
+                    const data = await response.json();
+
+                    if (!Array.isArray(data) || data.length === 0) {
+                        showAlert('No hay datos para el rango seleccionado', 'info');
+                        return;
+                    }
+
+                    // Actualizar gráfica
+                    faltasChart.data.labels = data.map(item => item.area);
+                    faltasChart.data.datasets[0].data = data.map(item => item.total_faltas);
+                    faltasChart.update();
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    showAlert('Error al obtener datos. Por favor, inténtalo de nuevo.', 'error');
+                } finally {
+                    // Restaurar botón
+                    document.getElementById('generarEstadisticas').innerHTML = 
+                        '<i class="fas fa-chart-line"></i> Generar';
+                }
             }
-        });
 
-        // Botón para generar estadísticas
-        const generarEstadisticasBtn = document.getElementById('generarEstadisticas');
-        generarEstadisticasBtn.addEventListener('click', () => {
-            updateChart();
+            // Helper functions
+            function formatDate(date) {
+                return date.toISOString().split('T')[0];
+            }
+
+            function showAlert(message, type = 'info') {
+                // Implementar un sistema de notificaciones bonito aquí
+                alert(message); // Temporal
+            }
+
+            // Event listeners
+            document.getElementById('periodSelector').addEventListener('change', function() {
+                const mode = this.value === 'semanal' ? 'range' : 'single';
+                datePicker.set('mode', mode);
+            });
+
+            document.getElementById('generarEstadisticas').addEventListener('click', updateChart);
         });
-    });
     </script>
 </body>
 </html>

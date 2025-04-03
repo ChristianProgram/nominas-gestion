@@ -89,65 +89,308 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Bonos</title>
-    <link rel="stylesheet" href="../public/styles.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bonos | Sistema de Nómina</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
-        /* Mantén los mismos estilos que en la página de checadas */
+        :root {
+            --primary-color: #00263F;
+            --secondary-color: #3b82f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --light-bg: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-color: #334155;
+            --text-light: #64748b;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--light-bg);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--light-bg);
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #1e293b;
+            color: #ffffff;
+            padding: 1rem;
+            flex-shrink: 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sidebar-header {
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .sidebar h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #ffffff;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .sidebar-section h3 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            padding: 0.5rem 1rem;
+            background-color: rgba(0, 38, 63, 0.5);
+            border-radius: 4px;
+        }
+        
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar ul li {
+            margin: 0.25rem 0;
+        }
+        
+        .sidebar ul li a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+        
+        .sidebar ul li a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        
+        .sidebar ul li a.active {
+            background: rgba(5, 56, 90, 0.8);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .sidebar ul li a i {
+            font-size: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Contenido principal */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            background-color: #fff;
+            overflow-x: auto;
+        }
+        
+        .section-header {
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-title {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        /* Filtros */
+        .filter-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        
+        .filter-select, .filter-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+        
+        .filter-select:focus, .filter-input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .search-input {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .filter-button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-button:hover {
+            background-color: #2563eb;
+        }
+        
+        /* Tabla de bonos */
+        .bonos-table-container {
+            overflow-x: auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        
         .bonos-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            min-width: 800px;
         }
-        .bonos-table th, .bonos-table td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: center;
-        }
+        
         .bonos-table th {
-            background-color: #f2f2f2;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
         }
-        .pagination {
-            margin-top: 20px;
-            text-align: center;
+        
+        .bonos-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
         }
-        .pagination a, .pagination span {
-            margin: 0 5px;
-            text-decoration: none;
-            color: #333;
-            padding: 8px 12px;
-            border: 1px solid #ccc;
+        
+        .bonos-table tr:nth-child(even) {
+            background-color: var(--light-bg);
+        }
+        
+        .bonos-table tr:hover {
+            background-color: #f1f5f9;
+        }
+        
+        /* Estilos para inputs */
+        .input-cantidad {
+            width: 100px;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
-            transition: background-color 0.3s ease;
+            text-align: right;
         }
-        .pagination a.active {
-            font-weight: bold;
-            color: #000;
-            background-color: #f2f2f2;
+        
+        .input-razon {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
         }
-        .pagination a:hover:not(.disabled) {
-            background-color: #ddd;
+        
+        /* Botones */
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
-        .pagination .disabled {
-            color: #aaa;
-            cursor: not-allowed;
-            background-color: #f9f9f9;
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
         }
-        .filter-form {
-            margin-bottom: 20px;
+        
+        .btn-primary:hover {
+            background-color: #2563eb;
         }
-        .filter-form label {
-            margin-right: 10px;
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
         }
-        .filter-form select, .filter-form input {
-            padding: 5px;
-            margin-right: 10px;
+        
+        .btn-warning:hover {
+            background-color: #d97706;
         }
-
-        /* Estilos para el modal */
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #0f9e6e;
+        }
+        
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -159,299 +402,367 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             overflow: auto;
             background-color: rgba(0, 0, 0, 0.5);
         }
-
+        
         .modal-content {
             background-color: #fff;
-            margin: 10% auto;
-            padding: 20px;
-            border: 1px solid #ccc;
-            width: 60%;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin: 5% auto;
+            padding: 1.5rem;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: #000;
-        }
-
-        /* Estilos para la tabla de bonos dentro del modal */
-        #lista-bonos table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        #lista-bonos th, #lista-bonos td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
-
-        #lista-bonos th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-
-        #lista-bonos tr:hover {
-            background-color: #f5f5f5;
-        }
-
-        /* Estilos para la navegación semanal */
-        .navegacion-semanal {
+        
+        .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .navegacion-semanal button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .navegacion-semanal button:hover {
-            background-color: #0056b3;
-        }
-
-        .navegacion-semanal span {
-            font-size: 18px;
-            font-weight: bold;
-        }
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            background-color: #1e293b;
-            color: #ffffff;
-            padding: 1rem;
-        }
-        .sidebar-header {
-            padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .sidebar h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .sidebar-section {
             margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
         }
-        .sidebar-section h3 {
-            font-size: 1rem;
+        
+        .modal-title {
+            font-size: 1.5rem;
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            background-color: #00263F;
+            color: var(--primary-color);
+            margin: 0;
         }
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
+        
+        .close {
+            color: var(--text-light);
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s ease;
         }
-        .sidebar ul li {
-            margin: 0.5rem 0;
+        
+        .close:hover {
+            color: var(--text-color);
         }
-        .sidebar ul li a {
-            color: rgba(255, 255, 255, 0.85);
-            text-decoration: none;
+        
+        /* Navegación semanal */
+        .week-navigation {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
-            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem;
+            background-color: var(--light-bg);
+            border-radius: 6px;
+        }
+        
+        .week-title {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        
+        /* Paginación */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .pagination {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .page-item {
+            list-style: none;
+        }
+        
+        .page-link {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
+            color: var(--text-color);
+            text-decoration: none;
             transition: all 0.2s ease;
         }
-        .sidebar ul li a:hover {
-            background: rgba(255, 255, 255, 0.05);
+        
+        .page-link:hover {
+            background-color: var(--light-bg);
         }
-        .sidebar ul li a.active {
-            background:rgb(5, 56, 90);
+        
+        .page-item.active .page-link {
+            background-color: var(--secondary-color);
             color: white;
+            border-color: var(--secondary-color);
         }
-        .sidebar ul li a i {
-            font-size: 1rem;
-            width: 20px;
-            text-align: center;
+        
+        .page-item.disabled .page-link {
+            color: var(--text-light);
+            pointer-events: none;
+            background-color: #f8fafc;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                padding: 1rem;
+            }
+            
+            .main-content {
+                padding: 1.5rem;
+            }
+            
+            .filter-row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .filter-group {
+                width: 100%;
+            }
+            
+            .search-input {
+                min-width: 100%;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 2% auto;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-    <div class="sidebar">
-            <div class="sidebar-header">
-                <h2>Nominas</h2>
-            </div>
-
-            <!-- Sección: Informes -->
-            <div class="sidebar-section">
-                <h3>Informes</h3>
-                <ul>
-                    <li><a href="../public/index.php" class="active"><i class="fas fa-chart-bar"></i> Resumen</a></li>
-                </ul>
-            </div>
-
-            <!-- Sección: Gestionar -->
-            <div class="sidebar-section">
-                <h3>Gestionar</h3>
-                <ul>
-                    <li><a href="../views/checadas.php"><i class="fas fa-calendar-alt"></i> Asistencia</a></li>
-                    <li><a href="../views/empleados.php"><i class="fas fa-users"></i> Empleados</a></li>
-                    <li><a href="../views/calculo.php"><i class="fas fa-calculator"></i> Deducciones</a></li>
-                    <li><a href="../views/bonos.php"><i class="fas fa-gift"></i> Bonos</a></li>
-                    <li><a href="../views/roles.php"><i class="fas fa-briefcase"></i> Cargos</a></li>
-                    <li><a href="../views/importar.php"><i class="fas fa-file-import"></i> Importar datos</a></li>
-                    <li><a href="../views/reportes.php"><i class="fas fa-file-alt"></i> Reportes</a></li>
-                </ul>
-            </div>
-
-            <!-- Sección: Imprimibles -->
-            <div class="sidebar-section">
-                <h3>Imprimibles</h3>
-                <ul>
-                    <li><a href="#"><i class="fas fa-print"></i> Reportes PDF</a></li>
-                    <li><a href="#"><i class="fas fa-file-excel"></i> Exportar Excel</a></li>
-                </ul>
-            </div>
+<div class="sidebar">
+        <div class="sidebar-header">
+            <h2>Nóminas</h2>
         </div>
-        <div class="main-content">
-            <div class="content-container">
-                <div class="section-header">
-                    <h1 class="section-title">Bonos Semanales</h1>
-                </div>
 
-                <!-- Filtro por Semana -->
-                <form method="GET" action="bonos.php" class="filter-form">
-                    <label for="fecha">Selecciona una semana:</label>
-                    <input type="text" id="fecha" name="fecha" value="<?php echo $fechaSeleccionada; ?>" onchange="this.form.submit()">
+        <!-- Sección: Informes -->
+        <div class="sidebar-section">
+            <h3>Informes</h3>
+            <ul>
+                <li><a href="../public/index.php"><i class="fas fa-chart-bar"></i> Resumen</a></li>
+            </ul>
+        </div>
 
-                    <!-- Campo oculto para conservar el término de búsqueda -->
-                    <input type="hidden" name="search" value="<?php echo htmlspecialchars($searchTerm); ?>">
-                </form>
+        <!-- Sección: Gestionar -->
+        <div class="sidebar-section">
+            <h3>Gestionar</h3>
+            <ul>
+                <li><a href="../views/checadas.php"><i class="fas fa-calendar-alt"></i> Asistencia</a></li>
+                <li><a href="../views/empleados.php" class="active"><i class="fas fa-users"></i> Empleados</a></li>
+                <li><a href="../views/calculo.php"><i class="fas fa-calculator"></i> Deducciones</a></li>
+                <li><a href="../views/bonos.php"><i class="fas fa-gift"></i> Bonos</a></li>
+                <li><a href="../views/roles.php"><i class="fas fa-briefcase"></i> Cargos</a></li>
+                <li><a href="../views/importar.php"><i class="fas fa-file-import"></i> Importar datos</a></li>
+            </ul>
+        </div>
 
-                <!-- Formulario de búsqueda -->
-                <form method="GET" action="bonos.php">
-                    <input type="text" name="search" placeholder="Buscar por nombre o número" value="<?php echo htmlspecialchars($searchTerm); ?>">
-                    <!-- Campo oculto para conservar la fecha -->
-                    <input type="hidden" name="fecha" value="<?php echo $fechaSeleccionada; ?>">
-                    <button type="submit">Buscar</button>
-                </form>
-
-                <!-- Tabla de Bonos -->
-                <form method="POST" action="bonos.php">
-                    <input type="hidden" name="fecha" value="<?php echo $fechaSeleccionada; ?>">
-                    <input type="hidden" name="search" value="<?php echo htmlspecialchars($searchTerm); ?>">
-                    <button type="submit" style="margin-top: 20px;">Guardar Bonos</button>
-                    <table class="bonos-table">
-                        <thead>
-                            <tr>
-                                <th>Número de Empleado</th>
-                                <th>Nombre</th>
-                                <th>Cantidad</th>
-                                <th>Razón</th>
-                                <th>Ver Bonos</th> <!-- Nueva columna -->
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            foreach ($empleados as $empleado) {
-                                $numeroEmpleado = $empleado['Numero_Empleado'];
-                                $bonoEmpleado = $bonosPorEmpleado[$numeroEmpleado][0] ?? null;
-                                echo "<tr>";
-                                echo "<td>" . $empleado['Numero_Empleado'] . "</td>";
-                                echo "<td>" . $empleado['Nombre'] . "</td>";
-                                echo "<td><input type='number' name='bonos[$numeroEmpleado][cantidad]' value='" . ($bonoEmpleado ? $bonoEmpleado['cantidad'] : '0') . "' step='0.01'></td>";
-                                echo "<td><input type='text' name='bonos[$numeroEmpleado][razon]' value='" . ($bonoEmpleado ? $bonoEmpleado['razon'] : '') . "'></td>";
-                                echo "<td><button type='button' class='ver-bonos-btn' data-numero-empleado='$numeroEmpleado'>Ver Bonos</button></td>"; 
-                                echo "</tr>";
-                            }
-                            ?>
-                        </tbody>
-                    </table>
-                </form>
-
-                <!-- Modal para mostrar bonos semanales -->
-                <div id="modalBonos" class="modal">
-                    <div class="modal-content">
-                        <span class="close">&times;</span>
-                        <h2>Bonos Semanales</h2>
-                        <div class="navegacion-semanal">
-                            <button id="semanaAnterior">&lt; Semana Anterior</button>
-                            <span id="rangoSemanal"></span>
-                            <button id="semanaSiguiente">Semana Siguiente &gt;</button>
-                        </div>
-                        <div id="lista-bonos"></div>
-                    </div>
-                </div>
-
-                <!-- Paginación -->
-                <div class="pagination">
-                    <!-- Botón "Anterior" -->
-                    <?php if ($paginaActual > 1): ?>
-                        <a href="bonos.php?pagina=<?php echo $paginaActual - 1; ?>&fecha=<?php echo $fechaSeleccionada; ?>&search=<?php echo urlencode($searchTerm); ?>" class="pagination-button">Anterior</a>
-                    <?php else: ?>
-                        <span class="pagination-button disabled">Anterior</span>
-                    <?php endif; ?>
-
-                    <!-- Números de página -->
-                    <?php
-                    for ($i = 1; $i <= $totalPaginas; $i++) {
-                        $clase = ($i == $paginaActual) ? 'active' : '';
-                        echo "<a href='bonos.php?pagina=$i&fecha=$fechaSeleccionada&search=" . urlencode($searchTerm) . "' class='$clase'>$i</a>";
-                    }
-                    ?>
-
-                    <!-- Botón "Siguiente" -->
-                    <?php if ($paginaActual < $totalPaginas): ?>
-                        <a href="bonos.php?pagina=<?php echo $paginaActual + 1; ?>&fecha=<?php echo $fechaSeleccionada; ?>&search=<?php echo urlencode($searchTerm); ?>" class="pagination-button">Siguiente</a>
-                    <?php else: ?>
-                        <span class="pagination-button disabled">Siguiente</span>
-                    <?php endif; ?>
-                </div>
-            </div>
+        <!-- Sección: Imprimibles -->
+        <div class="sidebar-section">
+            <h3>Imprimibles</h3>
+            <ul>
+                <li><a href="../views/reportes.php"><i class="fas fa-file-alt"></i> Reportes PDF</a></li>
+            </ul>
         </div>
     </div>
+    
+    <div class="main-content">
+        <div class="section-header">
+            <h1 class="section-title"><i class="fas fa-gift"></i> Bonos Semanales</h1>
+        </div>
 
+        <!-- Filtros -->
+        <form method="GET" action="bonos.php" class="filter-container">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="fecha" class="filter-label">Semana:</label>
+                    <input type="text" id="fecha" name="fecha" class="filter-input" value="<?php echo $fechaSeleccionada; ?>">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="search" class="filter-label">Buscar empleado:</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="search" name="search" class="filter-input search-input" placeholder="Nombre o número" value="<?php echo htmlspecialchars($searchTerm); ?>">
+                        <input type="hidden" name="fecha" value="<?php echo $fechaSeleccionada; ?>">
+                        <button type="submit" class="filter-button">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Tabla de Bonos -->
+        <form method="POST" action="bonos.php">
+            <input type="hidden" name="fecha" value="<?php echo $fechaSeleccionada; ?>">
+            <input type="hidden" name="search" value="<?php echo htmlspecialchars($searchTerm); ?>">
+            
+            <div class="bonos-table-container">
+                <table class="bonos-table">
+                    <thead>
+                        <tr>
+                            <th>N° Empleado</th>
+                            <th>Nombre</th>
+                            <th>Cantidad</th>
+                            <th>Razón</th>
+                            <th>Historial</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($empleados)): ?>
+                            <?php foreach ($empleados as $empleado): ?>
+                                <?php
+                                $numeroEmpleado = $empleado['Numero_Empleado'];
+                                $bonoEmpleado = $bonosPorEmpleado[$numeroEmpleado][0] ?? null;
+                                ?>
+                                <tr>
+                                    <td><?php echo $empleado['Numero_Empleado']; ?></td>
+                                    <td><?php echo $empleado['Nombre']; ?></td>
+                                    <td>
+                                        <input type="number" 
+                                               name="bonos[<?php echo $numeroEmpleado; ?>][cantidad]" 
+                                               class="input-cantidad" 
+                                               value="<?php echo $bonoEmpleado ? $bonoEmpleado['cantidad'] : '0'; ?>" 
+                                               step="0.01"
+                                               min="0">
+                                    </td>
+                                    <td>
+                                        <input type="text" 
+                                               name="bonos[<?php echo $numeroEmpleado; ?>][razon]" 
+                                               class="input-razon" 
+                                               value="<?php echo $bonoEmpleado ? htmlspecialchars($bonoEmpleado['razon']) : ''; ?>"
+                                               placeholder="Motivo del bono">
+                                    </td>
+                                    <td>
+                                        <button type="button" 
+                                                class="btn btn-warning ver-bonos-btn" 
+                                                data-numero-empleado="<?php echo $numeroEmpleado; ?>">
+                                            <i class="fas fa-history"></i> Ver
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 2rem;">
+                                    <div style="color: var(--text-light);">
+                                        <i class="fas fa-user-slash" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                                        <p>No se encontraron empleados</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+            
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+        </form>
+
+        <!-- Modal para mostrar bonos semanales -->
+        <div id="modalBonos" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Historial de Bonos</h2>
+                    <span class="close">&times;</span>
+                </div>
+                
+                <div class="week-navigation">
+                    <button id="semanaAnterior" class="btn btn-primary">
+                        <i class="fas fa-chevron-left"></i> Semana Anterior
+                    </button>
+                    <span id="rangoSemanal" class="week-title"></span>
+                    <button id="semanaSiguiente" class="btn btn-primary">
+                        Semana Siguiente <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                
+                <div id="lista-bonos"></div>
+            </div>
+        </div>
+
+        <!-- Paginación -->
+        <?php if ($totalPaginas > 1): ?>
+            <div class="pagination-container">
+                <ul class="pagination">
+                    <!-- Botón Anterior -->
+                    <li class="page-item <?php echo ($paginaActual == 1) ? 'disabled' : ''; ?>">
+                        <a class="page-link" 
+                           href="bonos.php?pagina=<?php echo $paginaActual - 1; ?>&fecha=<?php echo $fechaSeleccionada; ?>&search=<?php echo urlencode($searchTerm); ?>">
+                            &laquo;
+                        </a>
+                    </li>
+                    
+                    <!-- Números de página -->
+                    <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                        <li class="page-item <?php echo ($i == $paginaActual) ? 'active' : ''; ?>">
+                            <a class="page-link" 
+                               href="bonos.php?pagina=<?php echo $i; ?>&fecha=<?php echo $fechaSeleccionada; ?>&search=<?php echo urlencode($searchTerm); ?>">
+                                <?php echo $i; ?>
+                            </a>
+                        </li>
+                    <?php endfor; ?>
+                    
+                    <!-- Botón Siguiente -->
+                    <li class="page-item <?php echo ($paginaActual == $totalPaginas) ? 'disabled' : ''; ?>">
+                        <a class="page-link" 
+                           href="bonos.php?pagina=<?php echo $paginaActual + 1; ?>&fecha=<?php echo $fechaSeleccionada; ?>&search=<?php echo urlencode($searchTerm); ?>">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        <?php endif; ?>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
     <script>
-        let fechaActual = new Date(); // Fecha actual para la navegación semanal
-        let numeroEmpleadoActual = null; // Almacena el número de empleado seleccionado
+        let fechaActual = new Date();
+        let numeroEmpleadoActual = null;
 
-        // Función para formatear la fecha como YYYY-MM-DD
+        // Flatpickr para el calendario
+        flatpickr("#fecha", {
+            dateFormat: "Y-m-d",
+            locale: "es",
+            onChange: function(selectedDates, dateStr, instance) {
+                if (dateStr) {
+                    instance.input.form.submit();
+                }
+            }
+        });
+
+        // Función para formatear la fecha
         function formatearFecha(date) {
             return date.toISOString().split('T')[0];
         }
 
-        // Función para obtener el rango de la semana (lunes a domingo)
+        // Función para obtener el rango semanal
         function obtenerRangoSemanal(date) {
             const inicioSemana = new Date(date);
-            inicioSemana.setDate(date.getDate() - date.getDay() + (date.getDay() === 0 ? -6 : 1)); // Lunes
+            inicioSemana.setDate(date.getDate() - date.getDay() + (date.getDay() === 0 ? -6 : 1));
             const finSemana = new Date(inicioSemana);
-            finSemana.setDate(inicioSemana.getDate() + 6); // Domingo
+            finSemana.setDate(inicioSemana.getDate() + 6);
+            
             return {
                 inicio: formatearFecha(inicioSemana),
                 fin: formatearFecha(finSemana)
             };
         }
 
-        // Función para cargar los bonos de la semana actual
+        // Función para cargar los bonos
         function cargarBonosSemana() {
             const rango = obtenerRangoSemanal(fechaActual);
-            document.getElementById('rangoSemanal').textContent = `${rango.inicio} a ${rango.fin}`;
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            
+            document.getElementById('rangoSemanal').textContent = 
+                `${new Date(rango.inicio).toLocaleDateString('es-ES', options)} - ${new Date(rango.fin).toLocaleDateString('es-ES', options)}`;
 
             fetch(`obtener_bonos.php?numero_empleado=${numeroEmpleadoActual}&fecha_inicio=${rango.inicio}&fecha_fin=${rango.fin}`)
                 .then(response => response.text())
@@ -460,42 +771,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 });
         }
 
-        // Abrir modal y cargar bonos del empleado
+        // Abrir modal y cargar bonos
         document.querySelectorAll('.ver-bonos-btn').forEach(button => {
-            button.addEventListener('click', function () {
+            button.addEventListener('click', function() {
                 numeroEmpleadoActual = this.getAttribute('data-numero-empleado');
-                fechaActual = new Date(); // Reiniciar a la semana actual
+                fechaActual = new Date();
                 cargarBonosSemana();
                 document.getElementById('modalBonos').style.display = 'block';
             });
         });
 
         // Navegación semanal
-        document.getElementById('semanaAnterior').addEventListener('click', function () {
-            fechaActual.setDate(fechaActual.getDate() - 7); // Retroceder una semana
+        document.getElementById('semanaAnterior').addEventListener('click', function() {
+            fechaActual.setDate(fechaActual.getDate() - 7);
             cargarBonosSemana();
         });
 
-        document.getElementById('semanaSiguiente').addEventListener('click', function () {
-            fechaActual.setDate(fechaActual.getDate() + 7); // Avanzar una semana
+        document.getElementById('semanaSiguiente').addEventListener('click', function() {
+            fechaActual.setDate(fechaActual.getDate() + 7);
             cargarBonosSemana();
         });
 
         // Cerrar modal
-        document.querySelector('.close').addEventListener('click', function () {
+        document.querySelector('.close').addEventListener('click', function() {
             document.getElementById('modalBonos').style.display = 'none';
         });
 
-        // Cerrar modal al hacer clic fuera de él
-        window.addEventListener('click', function (event) {
+        // Cerrar al hacer clic fuera
+        window.addEventListener('click', function(event) {
             if (event.target === document.getElementById('modalBonos')) {
                 document.getElementById('modalBonos').style.display = 'none';
             }
-        });
-        // Flatpickr para el calendario
-        flatpickr("#fecha", {
-            dateFormat: "Y-m-d",
-            locale: "es"
         });
     </script>
 </body>
